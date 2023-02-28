@@ -7,13 +7,16 @@ from gymnasium import spaces
 class RoadrunnerEnv(gym.Env):
     metadata = {"render_modes": ["terminal"]}
 
-    def __init__(self, render_mode=None, size=5, discrete=False):
+    def __init__(self, render_mode=None, size=10, discrete=True):
         self.size = size  # The size of the single dimension grid
 
         # Observations are dictionaries with the agent's location along a 1-D axis and speed.
         self.observation_space = spaces.Dict(
             {
-                "agent": spaces.Box(0, size - 1, shape=(2,), dtype=np.float32),
+                "agent": spaces.Box(
+                            low=np.array([0,0]),
+                            high=np.array([self.size-1,self.size-1]),
+                            dtype=np.float32),
             }
         )
 
@@ -41,7 +44,16 @@ class RoadrunnerEnv(gym.Env):
         return {}
 
     def _render_frame(self):
-        pass
+        for i in range(self.size):
+            if i == self._agent_location[0]:
+                print("=A=", end=" ")
+            elif i == self._target_location[0]:
+                print("=T=", end=" ")
+            elif i == self._wall_location[0]:
+                print("=W=", end=" ")
+            else:
+                print("= =", end=" ")
+        print()
 
     def reset(self, seed=None, options=None):
         # We need the following line to seed self.np_random
@@ -49,8 +61,8 @@ class RoadrunnerEnv(gym.Env):
 
         # Choose the agent's location uniformly at random
         self._agent_location = np.array([0, 0], dtype=np.float32)
-        self._target_location = np.array([10, 0], dtype=np.float32)
-        self._wall_location = np.array([11, 0], dtype=np.float32)
+        self._target_location = np.array([self.size-2, 0], dtype=np.float32)
+        self._wall_location = np.array([self.size-1, 0], dtype=np.float32)
 
         observation = self._get_obs()
         info = self._get_info()

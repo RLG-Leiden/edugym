@@ -41,7 +41,7 @@ class RoadrunnerEnv(gym.Env):
         return {"agent": self._agent_location}
 
     def _get_info(self):
-        return {}
+        return {"target": self._target_location, "wall": self._wall_location}
 
     def _render_frame(self):
         for i in range(self.size):

@@ -5,10 +5,11 @@ from typing import SupportsFloat, Any
 import gymnasium as gym
 from gymnasium.core import ActType, ObsType, RenderFrame
 from gymnasium.spaces import Discrete, MultiDiscrete
+import numpy as np
 
 
 class Study(gym.Env):
-    def __init__(self, total_days: int = 21, n_actions: int = 5,  seed: int = 42):
+    def __init__(self, total_days: int = 18, n_actions: int = 5,  seed: int = 42):
         assert n_actions >= 3, "There must be at least the actions 'study', 'sleep', 'go_out'"  # or one if we only have
         # the study action
         assert total_days >= 9, "At least 4 lectures should be able to take place"
@@ -34,7 +35,7 @@ class Study(gym.Env):
         self.current_day = 0
         self.action_history = [None for _ in range(self.total_days)]
 
-        return [0, 0], {}
+        return np.array([0, 0]), {}
 
     def step(self, action: ActType) -> tuple[ObsType, SupportsFloat, bool, bool, dict[str, Any]]:
         terminated = False
@@ -63,7 +64,7 @@ class Study(gym.Env):
 
         self.render()
 
-        return [self.knowledge, self.current_day], reward, terminated, False, {}
+        return np.array([self.knowledge, self.current_day]), reward, terminated, False, {}
 
     def render(self) -> RenderFrame | list[RenderFrame] | None:
         for i in range(self.total_days):  # print lecture schedule

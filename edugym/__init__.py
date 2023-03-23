@@ -8,5 +8,6 @@ register(
 
 register(
      id="edugym/Study-v0",
-     entry_point="edugym.envs:Study")
+     entry_point="edugym.envs:Study",
+)
 

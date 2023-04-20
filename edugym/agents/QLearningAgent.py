@@ -15,16 +15,13 @@ from edugym.envs.supermarket import SupermarketEnv
 class QLearningAgent(Agent):
     def __init__(self, n_states, n_actions, gamma=1.0, learning_rate=0.1):
         """
-        This method initializes an instance of the DynaAgent class.
+        This method initializes a Q-learning agent. 
 
         Parameters
         n_states (int): The number of possible states.
         n_actions (int): The number of possible actions.
         gamma (float, optional): The discount factor used in the Q-learning algorithm. The default value is 1.0.
         learning_rate (float, optional): The learning rate (alpha) used in the Q-learning algorithm. The default value is 0.1.
-        
-        Returns
-        None
         """
         super(QLearningAgent, self).__init__()
         self.n_states = n_states
@@ -145,7 +142,7 @@ class QLearningAgent(Agent):
 
 
 def test():
-    """ Notebook experiments with Dynamic Programming """
+    """ Basic Q-learning experiment """
 
     learning_rate = 0.1
     gamma = 1.0

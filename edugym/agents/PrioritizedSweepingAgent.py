@@ -18,6 +18,8 @@ class PrioritizedSweepingAgent(Agent):
         self, n_states, n_actions, gamma=1.0, learning_rate=0.1, priority_cutoff=0.01
     ):
         """
+        This method initializes a Prioritized Sweeping agent. 
+        
         Parameters:
         n_states (int): The number of possible states. 
         n_actions (int): The number of possible actions.
@@ -204,15 +206,8 @@ class PrioritizedSweepingAgent(Agent):
         return mean_return
 
 
-# def smooth(y, window, poly=2):
-#     '''
-#     y: vector to be smoothed
-#     window: size of the smoothing window '''
-#     return savgol_filter(y,window,poly)
-
-
 def test():
-    """ Notebook experiments with Dynamic Programming """
+    """ Notebook experiments with Prioritized Sweeping """
 
     learning_rate = 0.1
     gamma = 1.0

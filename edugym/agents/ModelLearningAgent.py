@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Edugym: Model learning Agent
+Edugym: Model Learning Agent
 
 """
 
@@ -16,6 +16,7 @@ class ModelLearningAgent(Agent):
         """
         The ModelLearningAgent class implements an agent that learns a model of the environment based on observed transitions. 
         
+        Parameters: 
         n_states (int): The number of states in the environment.
         n_actions (int): The number of actions in the environment.
         """
@@ -89,7 +90,7 @@ class ModelLearningAgent(Agent):
 
 
 def test():
-    """ Notebook experiments with Dynamic Programming """
+    """ Notebook experiments with a Model Learning Agent """
 
     # DP with perfect model
     step_timeout = 0.0

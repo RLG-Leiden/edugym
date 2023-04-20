@@ -12,21 +12,16 @@ from edugym.agents.Agent import Agent
 from edugym.envs.supermarket import SupermarketEnv
 
 
-
-
 class DynaAgent(Agent):
     def __init__(self, n_states, n_actions, gamma=1.0, learning_rate=0.1):
         """
-        This method initializes an instance of the DynaAgent class.
+        This method initializes a DynaAgent.
 
         Parameters
         n_states (int): The number of possible states.
         n_actions (int): The number of possible actions.
         gamma (float, optional): The discount factor used in the Q-learning algorithm. The default value is 1.0.
         learning_rate (float, optional): The learning rate (alpha) used in the Q-learning algorithm. The default value is 0.1.
-        
-        Returns
-        None
         """
         super(DynaAgent, self).__init__()
         self.n_states = n_states
@@ -260,11 +255,12 @@ def test():
         xaxis_title="Timesteps",
         yaxis_title="Average Return",
         legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01),
-        font = dict(family='serif', size=12), 
-        width = 600,
-        height = 500,
+        font=dict(family="serif", size=12),
+        width=600,
+        height=500,
     )
     fig.write_image("Dyna.pdf", scale=2)
+
 
 if __name__ == "__main__":
     test()

@@ -11,11 +11,13 @@ import plotly.graph_objects as go
 from edugym.agents.Agent import Agent
 from edugym.envs.supermarket import SupermarketEnv
 
+
 class DynamicProgrammingAgent(Agent):
     def __init__(self, n_states, n_actions, gamma=1.0):
         """
-        Creates an instance of the DynamicProgrammingAgent class with the following parameters:
+        This method initializes a Dynamic Programming agent.
 
+        Parameters: 
         n_states (int): The number of states in the environment.
         n_actions (int): The number of actions in the environment.
         gamma (float, optional): The discount factor used in the Bellman equation. Defaults to 1.0.
@@ -176,6 +178,7 @@ def test():
         height=500,
     )
     fig.write_image("DynamicProgramming.pdf", scale=2)
-    
+
+
 if __name__ == "__main__":
     test()

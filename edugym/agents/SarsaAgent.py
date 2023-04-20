@@ -15,18 +15,15 @@ from edugym.envs.supermarket import SupermarketEnv
 class SarsaAgent(Agent):
     def __init__(self, n_states, n_actions, gamma=1.0, learning_rate=0.1):
         """
-        This method initializes an instance of the DynaAgent class.
+        This method initializes a SARSA agent. 
 
         Parameters
         n_states (int): The number of possible states.
         n_actions (int): The number of possible actions.
         gamma (float, optional): The discount factor used in the Q-learning algorithm. The default value is 1.0.
         learning_rate (float, optional): The learning rate (alpha) used in the Q-learning algorithm. The default value is 0.1.
-        
-        Returns
-        None
         """
-        super(QLearningAgent, self).__init__()
+        super(SarsaAgent, self).__init__()
         self.n_states = n_states
         self.n_actions = n_actions
         self.learning_rate = learning_rate
@@ -151,7 +148,7 @@ class SarsaAgent(Agent):
 
 
 def test():
-    """ Notebook experiments with Dynamic Programming """
+    """ Basic SARSA experiment """
 
     learning_rate = 0.1
     gamma = 1.0
@@ -164,7 +161,7 @@ def test():
     for rep in range(n_repetitions):
         env = SupermarketEnv()
         eval_env = SupermarketEnv(step_timeout=0.0)
-        Agent = QLearningAgent(
+        Agent = SarsaAgent(
             env.observation_space.n, env.action_space.n, gamma, learning_rate
         )
         time_steps, returns = Agent.train(env, eval_env, epsilon, n_timesteps)

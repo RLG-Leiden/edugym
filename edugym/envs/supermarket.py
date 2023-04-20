@@ -6,8 +6,8 @@ Specifically designed for model-based reinforcement learning experiments
 
 """
 
-import gym
-from gym import spaces
+import gymnasium as gym
+from gymnasium import spaces
 import numpy as np
 import time
 import pygame

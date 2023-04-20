@@ -404,9 +404,6 @@ class SupermarketEnv(gym.Env):
                 pygame.display.set_caption("Supermarket Environment")
                 self.pygame_initialized = True
 
-            if colab_rendering:
-                output.clear()
-
             # Set background color
             self.screen.fill(white)
 
@@ -472,6 +469,7 @@ class SupermarketEnv(gym.Env):
 
             # convert image so it can be displayed in OpenCV
             if colab_rendering:
+                output.clear()
                 view = pygame.surfarray.array3d(self.screen)
                 view = view.transpose([1, 0, 2])
                 img_bgr = cv2.cvtColor(view, cv2.COLOR_RGB2BGR)
@@ -515,12 +513,13 @@ def test():
             break
 
         next_state, reward, done, info = env.step(action)
-        print(
-            f"State: {state}, Action: {action}, Next state {next_state}, Reward: {reward}, Done: {done}"
-        )
 
         # Render the environment
         env.render(render_mode)
+
+        print(
+            f"State: {state}, Action: {action}, Next state {next_state}, Reward: {reward}, Done: {done}"
+        )
 
         if done:
             state = env.reset()

@@ -113,6 +113,7 @@ class SarsaAgent(Agent):
             # Set next state
             if done:
                 s = env.reset()
+                a = self.select_action(s, epsilon)
             else:
                 s = s_next
                 a = a_next

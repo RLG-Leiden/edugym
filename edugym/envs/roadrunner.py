@@ -9,7 +9,7 @@ RED = (255, 0, 0)
 
 
 class RoadrunnerEnv(gym.Env):
-    metadata = {"render_modes": ["terminal", "pygame"]}
+    metadata = {"render_modes": ["terminal", "pygame", "none"]}
 
     def __init__(self, render_mode=None, size=10, discrete=True):
         self.size = size  # The size of the single dimension grid
@@ -106,7 +106,9 @@ class RoadrunnerEnv(gym.Env):
             self.screen.fill(BLACK)
             self.draw_grid()
             pygame.display.update()
-            self.clock.tick(30)
+            self.clock.tick(15)
+        elif self.render_mode == "none":
+            pass
         else:
             raise NotImplementedError
 
@@ -122,8 +124,7 @@ class RoadrunnerEnv(gym.Env):
         observation = self._get_obs()
         info = self._get_info()
 
-        if self.render_mode == "teminal":
-            self._render_frame()
+        self._render_frame()
 
         return observation, info
 
@@ -164,7 +165,6 @@ class RoadrunnerEnv(gym.Env):
         observation = self._get_obs()
         info = self._get_info()
 
-        if self.render_mode == "terminal":
-            self._render_frame()
+        self._render_frame()
 
         return observation, reward, terminated, False, info

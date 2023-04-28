@@ -8,9 +8,9 @@ def run_env(args):
     for i in range(2):
         print(f"Step: {i}")
         action = env.action_space.sample()
-        observation, reward, terminated, truncated, info = env.step(action)
+        observation, reward, terminated, info = env.step(action)
 
-        if terminated or truncated:
+        if terminated:
             observation, info = env.reset(seed=42)
     env.close()
 

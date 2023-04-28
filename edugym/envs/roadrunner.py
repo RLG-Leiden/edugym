@@ -6,21 +6,22 @@ from gymnasium import spaces
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 RED = (255, 0, 0)
+MAX_SPEED = 10
 
 
 class RoadrunnerEnv(gym.Env):
     metadata = {"render_modes": ["terminal", "pygame", "none"]}
 
-    def __init__(self, render_mode=None, size=10, discrete=True):
+    def __init__(self, render_mode="terminal", size=10, discrete=True):
         self.size = size  # The size of the single dimension grid
 
         # Observations are dictionaries with the agent's location along a 1-D axis and speed.
         self.observation_space = spaces.Dict(
             {
                 "agent": spaces.Box(
-                    low=np.array([0, 0], dtype=np.float64),
-                    high=np.array([self.size - 1, self.size - 1], dtype=np.float64),
-                    dtype=np.float64,
+                    low=np.array([0, 0], dtype=int),
+                    high=np.array([self.size, MAX_SPEED], dtype=int),
+                    dtype=int,
                 ),
             }
         )
@@ -85,7 +86,8 @@ class RoadrunnerEnv(gym.Env):
                 pygame.draw.rect(self.screen, WHITE, rect)
 
     def _get_obs(self):
-        return {"agent": self._agent_location}
+        # return self._agent_location
+        return (self._agent_location[0] * MAX_SPEED) + self._agent_location[1]
 
     def _get_info(self):
         return {"target": self._target_location, "wall": self._wall_location}
@@ -117,16 +119,16 @@ class RoadrunnerEnv(gym.Env):
         super().reset(seed=seed)
 
         # Choose the agent's location uniformly at random
-        self._agent_location = np.array([0, 0], dtype=np.float64)
-        self._target_location = np.array([self.size - 2, 0], dtype=np.float64)
-        self._wall_location = np.array([self.size - 1, 0], dtype=np.float64)
+        self._agent_location = np.array([0, 0], dtype=int)
+        self._target_location = np.array([self.size - 2, 0], dtype=int)
+        self._wall_location = np.array([self.size - 1, 0], dtype=int)
 
         observation = self._get_obs()
         info = self._get_info()
 
         self._render_frame()
 
-        return observation, info
+        return observation
 
     def _compute_intermediate_reward(self):
         return 0
@@ -139,32 +141,30 @@ class RoadrunnerEnv(gym.Env):
         # then update speed with action
         new_dx = self._agent_location[1] + action[1]
 
-        # Update the agent's location
-        self._agent_location = np.array([new_x, new_dx], dtype=np.float64)
-
         # An episode is done iff the agent has reached the target OR the agent has reached the wall
-        if (
-            self._agent_location[0] >= self._target_location[0]
-            and self._agent_location[0] <= self._wall_location[0]
-        ):
-            print("REACHED THE TARGET")
+        if new_x >= self._target_location[0] and new_x <= self._wall_location[0]:
             terminated = True
             reward = 1
-        elif self._agent_location[0] >= self._wall_location[0]:
-            print("FELL OFF THE EDGE")
+        elif new_x >= self._wall_location[0]:
             terminated = True
             reward = -100
-        elif self._agent_location[1] <= 0:
-            print("SLOWED DOWN TOO MUCH")
+        elif new_dx <= 0:
             terminated = True
             reward = -100
         else:
             terminated = False
             reward = self._compute_intermediate_reward()
 
+        # Update the agent's location
+        if new_dx >= MAX_SPEED:
+            new_dx = MAX_SPEED
+        if new_x >= self.size - 1:
+            new_x = self.size - 1
+        self._agent_location = np.array([new_x, new_dx], dtype=int)
+
         observation = self._get_obs()
         info = self._get_info()
 
         self._render_frame()
 
-        return observation, reward, terminated, False, info
+        return observation, reward, terminated, info

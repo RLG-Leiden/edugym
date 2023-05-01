@@ -49,7 +49,7 @@ class QLearningAgent(Agent):
             )  # Explore: choose a random action
         else:
             action = np.argmax(
-                self.Q_sa[state,]
+                self.Q_sa[state]
             )  # Exploit: choose the action with the highest Q-value
         return action
 
@@ -90,11 +90,17 @@ class QLearningAgent(Agent):
         timesteps = []
         mean_eval_returns = []
 
-        s = env.reset()
+        reward_sums = []
+        s, info = env.reset()
+        r_sum = 0
+        steps = 0
+        step_sums = []
         for t in range(n_timesteps):
             # take action in environment
             a = self.select_action(s, epsilon)
-            s_next, r, done, _ = env.step(a)
+            s_next, r, done, truncated, _ = env.step(a)
+            r_sum += r
+            steps += 1
 
             # update Q table
             self.update(s, a, s_next, r)
@@ -102,18 +108,22 @@ class QLearningAgent(Agent):
             # Evaluate
             if (t % eval_interval) == 0:
                 mean_eval_return = self.evaluate(eval_env, epsilon=0.0)
-                timesteps.append(t)
                 mean_eval_returns.append(mean_eval_return)
 
             # Set next state
-            if done:
-                s = env.reset()
+            if done or truncated:
+                reward_sums.append(r_sum)
+                step_sums.append(steps)
+                steps = 0
+                r_sum = 0
+                timesteps.append(t)
+                s, info = env.reset()
             else:
                 s = s_next
 
-        return timesteps, mean_eval_returns
+        return timesteps, mean_eval_returns, reward_sums, step_sums
 
-    def evaluate(self, eval_env, epsilon, n_episodes=50, max_horizon=100):
+    def evaluate(self, eval_env, epsilon, n_episodes=1, max_horizon=100):
         """
         Evaluates the performance of the agent by running a number of episodes in the environment and computing the average return. The method returns the mean return.
         
@@ -125,13 +135,13 @@ class QLearningAgent(Agent):
 
         returns = []  # list to store the reward per episode
         for i in range(n_episodes):  # run 50 evaluation episodes
-            s = eval_env.reset()
+            s, info = eval_env.reset()
             R_ep = 0
             for t in range(max_horizon):
                 a = self.select_action(s, epsilon)
-                s_prime, r, done, _ = eval_env.step(a)
+                s_prime, r, done, truncated, _ = eval_env.step(a)
                 R_ep += r
-                if done:
+                if done or truncated:
                     break
                 else:
                     s = s_prime

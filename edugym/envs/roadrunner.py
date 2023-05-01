@@ -86,7 +86,6 @@ class RoadrunnerEnv(gym.Env):
                 pygame.draw.rect(self.screen, WHITE, rect)
 
     def _get_obs(self):
-        # return self._agent_location
         return (self._agent_location[0] * MAX_SPEED) + self._agent_location[1]
 
     def _get_info(self):
@@ -128,10 +127,10 @@ class RoadrunnerEnv(gym.Env):
 
         self._render_frame()
 
-        return observation
+        return observation, info
 
     def _compute_intermediate_reward(self):
-        return 0
+        return -1
 
     def step(self, action):
         # Map the action (element of {0,1,2}) to agent location
@@ -155,6 +154,8 @@ class RoadrunnerEnv(gym.Env):
             terminated = False
             reward = self._compute_intermediate_reward()
 
+        truncated = False
+
         # Update the agent's location
         if new_dx >= MAX_SPEED:
             new_dx = MAX_SPEED
@@ -167,4 +168,4 @@ class RoadrunnerEnv(gym.Env):
 
         self._render_frame()
 
-        return observation, reward, terminated, info
+        return observation, reward, terminated, truncated, info

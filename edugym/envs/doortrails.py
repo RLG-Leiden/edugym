@@ -1,19 +1,18 @@
 import numpy as np
-import gym
-from gym.spaces import Discrete, Box
+import gymnasium
+from gymnasium.spaces import Discrete, Box
 import pygame
 
 
-class DoortrailsEnv(gym.Env):
+class DoortrailsEnv(gymnasium.Env):
     metadata = {"render_modes": ["terminal", "pygame"]}
 
     def __init__(self, render_mode=None, num_doors=3, verbose=0):
         self.num_doors = num_doors
 
-        # Observation space is the index of the door that is currently the correct door,
-        # the num_doors if the correct door is hidden,
-        # or num_doors + 1 if no observation is available (e.g. at the beginning of the episode with framestacking)
-        self.observation_space = Discrete(self.num_doors + 2)
+        # Observation space is the index of the door that is currently the correct door
+        # or num_doors if the correct door is hidden,
+        self.observation_space = Discrete(self.num_doors + 1)
 
         # We have num_doors actions, corresponding to "open door 0", "open door 1", "open door 2" etc.
         self.action_space = Discrete(self.num_doors)
@@ -56,7 +55,7 @@ class DoortrailsEnv(gym.Env):
         observation = self._get_obs()
         info = self._get_info()
 
-        return observation
+        return observation, info
 
     def step(self, action):
         assert action in self.action_space, "Invalid action: %s" % action
@@ -85,7 +84,7 @@ class DoortrailsEnv(gym.Env):
         terminated = self._terminated
         info = self._get_info()
 
-        return observation, reward, terminated, info
+        return observation, reward, terminated, False, info
 
     def render(self):
         if self.render_mode == "terminal":

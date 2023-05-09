@@ -16,16 +16,20 @@ class QLearningAgent_Framestacking:
         learning_rate=0.1,
         framestack_size: int = 1,
     ):
-        self.n_states = n_states
+        self.n_states = n_states + 1  # add one state for 'no observation yet', at the start of a rollout.
         self.n_actions = n_actions
         self.gamma = gamma
         self.learning_rate = learning_rate
         self.framestack_size = framestack_size
 
         # create a tuple of n_states * framestack_size + n_actions
-        shape = (n_states,) * self.framestack_size + (n_actions,)
+        shape = (self.n_states,) * self.framestack_size + (self.n_actions,)
 
         self.Q_sa = np.zeros(shape)
+
+        # Deque of observations. A deque is a special list of a fixed length.
+        # If the maximum length is reached, the element furthest from the newly
+        # inserted element is removed.
         self.observations = deque(maxlen=framestack_size)
         self.reset_observations()
 
@@ -69,12 +73,12 @@ class QLearningAgent_Framestacking:
         timesteps = []
         mean_eval_returns = []
 
-        s = env.reset()
+        s, _ = env.reset()
         self.reset_observations()
         for t in range(n_timesteps):
             # take action in environment
             a = self.select_action(s, epsilon)
-            s_next, r, done, _ = env.step(a)
+            s_next, r, done, _, _ = env.step(a)
 
             # update Q table
             self.update(s, a, s_next, r)
@@ -87,7 +91,7 @@ class QLearningAgent_Framestacking:
 
             # Set next state
             if done:
-                s = env.reset()
+                s, _ = env.reset()
                 self.reset_observations()
             else:
                 s = s_next
@@ -106,13 +110,13 @@ class QLearningAgent_Framestacking:
 
         returns = []  # list to store the reward per episode
         for i in range(n_episodes):  # run 50 evaluation episodes
-            s = eval_env.reset()
+            s, _ = eval_env.reset()
             self.reset_observations()
             R_ep = 0
             done = False
             while True:
                 a = self.select_action(s, epsilon)
-                s_prime, r, done, _ = eval_env.step(a)
+                s_prime, r, done, _, _ = eval_env.step(a)
                 R_ep += r
                 if done:
                     break

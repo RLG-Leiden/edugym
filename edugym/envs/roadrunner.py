@@ -15,8 +15,8 @@ class RoadrunnerEnv(gym.Env):
     def __init__(self, render_mode="terminal", size=10, negative_reward_size=-100):
         self.size = size  # The size of the single dimension grid
 
-        # Observations are dictionaries with the agent's location along a 1-D axis and speed.
-        # We can enumerate all states by taking the Cartesian product of these two sets.
+        # Observations are the agent's location in the grid and its speed
+        # We can represent this as a single integer by taking their Cartesian product
         self.observation_space = spaces.Discrete(self.size * (MAX_SPEED + 1))
 
         # We have 3 actions, corresponding to "speed up", "slow down", "idle"
@@ -81,20 +81,19 @@ class RoadrunnerEnv(gym.Env):
 
     def _get_obs(self):
         """
-        Get the observation corresponding to the current state by taking the Cartesian product of
-        the agent's location and speed.
+        Get the current state, represented as an integer (see `self.observation_space`)
         """
         return (self._agent_location[0] * MAX_SPEED) + self._agent_location[1]
 
     def _get_info(self):
         """
-        Get additional state info
+        Get additional information about the current state.
         """
         return {"target": self._target_location, "wall": self._wall_location}
 
     def _render_frame(self):
         """
-        Render the current state of the environment.
+        Print the current state to the terminal or pygame screen.
         """
         if self.render_mode == "terminal":
             for i in range(self.size):
@@ -138,13 +137,14 @@ class RoadrunnerEnv(gym.Env):
 
     def _compute_intermediate_reward(self):
         """
-        Compute the intermediate reward for the current state, in which nothing happened.
+        Compute the intermediate reward for the current state where nothing happened (agent moved).
         """
         return -1
 
     def step(self, action):
         """
-        Step the environment by one timestep, taking the provided action.
+        Step through the environment by taking `action` and returning the next state, reward, and
+        whether the episode is done.
         """
         # Map the action (element of {0,1,2}) to agent location
         action = self._action_to_speed[action]

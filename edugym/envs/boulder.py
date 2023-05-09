@@ -29,7 +29,7 @@ class BoulderEnv(gym.Env):
         self.steps_taken = 0
         
 
-        # Observations are dictionaries with the agent's location along a 1-D axis and speed.
+        # Observation is the current height of the agent.
         self.observation_space = spaces.Box(
                             low=np.array([0]),
                             high=np.array([self.height]),
@@ -94,15 +94,15 @@ class BoulderEnv(gym.Env):
                     rect = pygame.Rect(
                         x * self.cell_size,
                         (self.height-y) * self.cell_size,
-                        self.cell_size,
-                        self.cell_size,
+                        40,
+                        20,
                     )
                     if y == 0 and self._agent_location == 0:
                         pygame.draw.rect(self.screen, grey, rect)
                     else:
                         if wall[y][x] == 1: # grip
                             if y == self._agent_location:
-                                pygame.draw.circle(self.screen, black, center=(x * self.cell_size + self.cell_size*0.5, (self.height-y) * self.cell_size + self.cell_size * 0.5), radius=self.cell_size * 0.5)
+                                pygame.draw.circle(self.screen, black, center=(x * self.cell_size + self.cell_size*0.5, (self.height-y) * self.cell_size + self.cell_size * 0.5), radius=self.cell_size * 0.2)
                             else:
                                 pygame.draw.rect(self.screen, green, rect)
                         elif wall[y][x] == 0:
@@ -130,7 +130,7 @@ class BoulderEnv(gym.Env):
         super().reset(seed=seed)
         np.random.seed(seed)
 
-        # Choose the agent's location uniformly at random
+        # Initialize positions of grips
         self._agent_location = np.array([0], dtype=int)
         self.grips = np.random.choice(self.n_grips, self.height)
         self.steps_taken = 0

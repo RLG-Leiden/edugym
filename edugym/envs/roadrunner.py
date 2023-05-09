@@ -12,28 +12,12 @@ MAX_SPEED = 10
 class RoadrunnerEnv(gym.Env):
     metadata = {"render_modes": ["terminal", "pygame", "none"]}
 
-<<<<<<< HEAD
-    def __init__(self, render_mode="terminal", size=10, discrete=True):
-        self.size = size  # The size of the single dimension grid
-
-        # Observations are dictionaries with the agent's location along a 1-D axis and speed.
-        self.observation_space = spaces.Dict(
-            {
-                "agent": spaces.Box(
-                    low=np.array([0, 0], dtype=int),
-                    high=np.array([self.size, MAX_SPEED], dtype=int),
-                    dtype=int,
-                ),
-            }
-        )
-=======
     def __init__(self, render_mode="terminal", size=10, negative_reward_size=-100):
         self.size = size  # The size of the single dimension grid
 
         # Observations are dictionaries with the agent's location along a 1-D axis and speed.
         # We can enumerate all states by taking the Cartesian product of these two sets.
         self.observation_space = spaces.Discrete(self.size * (MAX_SPEED + 1))
->>>>>>> ffcba85 (Updated environment)
 
         # We have 3 actions, corresponding to "speed up", "slow down", "idle"
         self.action_space = spaces.Discrete(3)
@@ -96,13 +80,10 @@ class RoadrunnerEnv(gym.Env):
                 pygame.draw.rect(self.screen, WHITE, rect)
 
     def _get_obs(self):
-<<<<<<< HEAD
-=======
         """
         Get the observation corresponding to the current state by taking the Cartesian product of
         the agent's location and speed.
         """
->>>>>>> ffcba85 (Updated environment)
         return (self._agent_location[0] * MAX_SPEED) + self._agent_location[1]
 
     def _get_info(self):
@@ -156,12 +137,9 @@ class RoadrunnerEnv(gym.Env):
         return observation, info
 
     def _compute_intermediate_reward(self):
-<<<<<<< HEAD
-=======
         """
         Compute the intermediate reward for the current state, in which nothing happened.
         """
->>>>>>> ffcba85 (Updated environment)
         return -1
 
     def step(self, action):
@@ -181,11 +159,7 @@ class RoadrunnerEnv(gym.Env):
             reward = 1
         elif new_x >= self._wall_location[0]:
             terminated = True
-<<<<<<< HEAD
-            reward = -100
-=======
             reward = self.negative_reward_size
->>>>>>> ffcba85 (Updated environment)
         elif new_dx <= 0:
             terminated = True
             reward = self.negative_reward_size

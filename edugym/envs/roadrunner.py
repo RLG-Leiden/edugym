@@ -12,6 +12,7 @@ MAX_SPEED = 10
 class RoadrunnerEnv(gym.Env):
     metadata = {"render_modes": ["terminal", "pygame", "none"]}
 
+<<<<<<< HEAD
     def __init__(self, render_mode="terminal", size=10, discrete=True):
         self.size = size  # The size of the single dimension grid
 
@@ -25,6 +26,14 @@ class RoadrunnerEnv(gym.Env):
                 ),
             }
         )
+=======
+    def __init__(self, render_mode="terminal", size=10, negative_reward_size=-100):
+        self.size = size  # The size of the single dimension grid
+
+        # Observations are dictionaries with the agent's location along a 1-D axis and speed.
+        # We can enumerate all states by taking the Cartesian product of these two sets.
+        self.observation_space = spaces.Discrete(self.size * (MAX_SPEED + 1))
+>>>>>>> ffcba85 (Updated environment)
 
         # We have 3 actions, corresponding to "speed up", "slow down", "idle"
         self.action_space = spaces.Discrete(3)
@@ -44,6 +53,7 @@ class RoadrunnerEnv(gym.Env):
         self.render_mode = render_mode
         if self.render_mode == "pygame":
             self.init_pygame()
+        self.negative_reward_size = negative_reward_size
 
     def init_pygame(self):
         """
@@ -86,12 +96,25 @@ class RoadrunnerEnv(gym.Env):
                 pygame.draw.rect(self.screen, WHITE, rect)
 
     def _get_obs(self):
+<<<<<<< HEAD
+=======
+        """
+        Get the observation corresponding to the current state by taking the Cartesian product of
+        the agent's location and speed.
+        """
+>>>>>>> ffcba85 (Updated environment)
         return (self._agent_location[0] * MAX_SPEED) + self._agent_location[1]
 
     def _get_info(self):
+        """
+        Get additional state info
+        """
         return {"target": self._target_location, "wall": self._wall_location}
 
     def _render_frame(self):
+        """
+        Render the current state of the environment.
+        """
         if self.render_mode == "terminal":
             for i in range(self.size):
                 if i == self._agent_location[0]:
@@ -114,6 +137,9 @@ class RoadrunnerEnv(gym.Env):
             raise NotImplementedError
 
     def reset(self, seed=None, options=None):
+        """
+        Reset the environment to a random initial state.
+        """
         # We need the following line to seed self.np_random
         super().reset(seed=seed)
 
@@ -130,9 +156,18 @@ class RoadrunnerEnv(gym.Env):
         return observation, info
 
     def _compute_intermediate_reward(self):
+<<<<<<< HEAD
+=======
+        """
+        Compute the intermediate reward for the current state, in which nothing happened.
+        """
+>>>>>>> ffcba85 (Updated environment)
         return -1
 
     def step(self, action):
+        """
+        Step the environment by one timestep, taking the provided action.
+        """
         # Map the action (element of {0,1,2}) to agent location
         action = self._action_to_speed[action]
         # First update location with current speed
@@ -146,10 +181,14 @@ class RoadrunnerEnv(gym.Env):
             reward = 1
         elif new_x >= self._wall_location[0]:
             terminated = True
+<<<<<<< HEAD
             reward = -100
+=======
+            reward = self.negative_reward_size
+>>>>>>> ffcba85 (Updated environment)
         elif new_dx <= 0:
             terminated = True
-            reward = -100
+            reward = self.negative_reward_size
         else:
             terminated = False
             reward = self._compute_intermediate_reward()

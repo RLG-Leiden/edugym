@@ -3,3 +3,5 @@ numpy
 plotly
 pygame
 black
+scipy
+pandas

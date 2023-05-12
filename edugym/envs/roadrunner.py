@@ -12,7 +12,7 @@ MAX_SPEED = 10
 class RoadrunnerEnv(gym.Env):
     metadata = {"render_modes": ["terminal", "pygame", "none"]}
 
-    def __init__(self, render_mode="terminal", size=10, negative_reward_size=-100):
+    def __init__(self, render_mode="terminal", size=10, negative_reward_size=-100, max_episode_steps=100):
         self.size = size  # The size of the single dimension grid
 
         # Observations are the agent's location in the grid and its speed
@@ -22,11 +22,10 @@ class RoadrunnerEnv(gym.Env):
         # We have 3 actions, corresponding to "speed up", "slow down", "idle"
         self.action_space = spaces.Discrete(3)
 
-        """
-        The following dictionary maps abstract actions from `self.action_space` to
-        the direction we will walk in if that action is taken.
-        I.e. 0 corresponds to "right", 1 to "up" etc.
-        """
+
+        # The following dictionary maps abstract actions from
+        # `self.action_space` to the direction we will walk in if that action
+        # is taken. I.e. 0 corresponds to "right", 1 to "up" etc.
         self._action_to_speed = {
             0: np.array([0, 1]),  # speed up
             1: np.array([0, -1]),  # slow down
@@ -35,9 +34,12 @@ class RoadrunnerEnv(gym.Env):
 
         assert render_mode is None or render_mode in self.metadata["render_modes"]
         self.render_mode = render_mode
+
         if self.render_mode == "pygame":
             self.init_pygame()
         self.negative_reward_size = negative_reward_size
+        self.max_episode_steps = max_episode_steps
+        self._step_counter = 0
 
     def init_pygame(self):
         """
@@ -89,7 +91,7 @@ class RoadrunnerEnv(gym.Env):
         """
         Get additional information about the current state.
         """
-        return {"target": self._target_location, "wall": self._wall_location}
+        return {"target": self._target_location, "wall": self._wall_location, "steps": self._step_counter}
 
     def _render_frame(self):
         """
@@ -127,6 +129,7 @@ class RoadrunnerEnv(gym.Env):
         self._agent_location = np.array([0, 0], dtype=int)
         self._target_location = np.array([self.size - 2, 0], dtype=int)
         self._wall_location = np.array([self.size - 1, 0], dtype=int)
+        self._step_counter = 0
 
         observation = self._get_obs()
         info = self._get_info()
@@ -153,6 +156,8 @@ class RoadrunnerEnv(gym.Env):
         # then update speed with action
         new_dx = self._agent_location[1] + action[1]
 
+        self._step_counter += 1
+
         # An episode is done iff the agent has reached the target OR the agent has reached the wall
         if new_x >= self._target_location[0] and new_x <= self._wall_location[0]:
             terminated = True
@@ -167,7 +172,10 @@ class RoadrunnerEnv(gym.Env):
             terminated = False
             reward = self._compute_intermediate_reward()
 
-        truncated = False
+        if self._step_counter > self.max_episode_steps:
+          truncated = True
+        else:
+          truncated = False
 
         # Update the agent's location
         if new_dx >= MAX_SPEED:

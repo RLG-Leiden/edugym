@@ -4,7 +4,7 @@ from gymnasium.spaces import Discrete, Box
 import pygame
 
 
-class DoortrailsEnv(gymnasium.Env):
+class MemoryCorridorEnv(gymnasium.Env):
     metadata = {"render_modes": ["terminal", "pygame"]}
 
     def __init__(self, render_mode=None, num_doors=3, verbose=0):
@@ -127,7 +127,7 @@ class DoortrailsEnv(gymnasium.Env):
                 )
                 self.clock = pygame.time.Clock()
                 self.font = pygame.font.SysFont("Arial", 20)
-                pygame.display.set_caption("DoorTrails PyGame Visualization")
+                pygame.display.set_caption("MemoryCorridorEnv PyGame Visualization")
                 self.pygame_initialized = True
 
             num_doors = self.num_doors
@@ -200,7 +200,7 @@ class DoortrailsEnv(gymnasium.Env):
 
 
 if __name__ == "__main__":
-    env = DoortrailsEnv(render_mode="terminal")
+    env = MemoryCorridorEnv(render_mode="terminal")
     env.reset()
 
     # Play with user input

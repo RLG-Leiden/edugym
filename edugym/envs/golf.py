@@ -1,5 +1,3 @@
-# @title Environment implementation
-# @markdown Execute the cell to run all the pre-requisite code.
 import sys
 from dataclasses import dataclass
 
@@ -118,10 +116,10 @@ class GolfEnv(gym.Env):
         # Get unitvector of ball direction
         distance = self.golf_course.green_coordinates - self.ball.coordinates
         direction = distance / np.linalg.norm(distance)
-        
+
         # Sample random deflection of shot
         perpendicular = self._perpendicular(direction)
-        std_dev = self.stochasticity * (action ** 2)
+        std_dev = self.stochasticity * (action**2)
         directional_deflection = self._np_random.normal(scale=std_dev).astype(
             np.float32
         )
@@ -141,7 +139,10 @@ class GolfEnv(gym.Env):
             # Ball reached the green
             done = True
             reward = max((self.max_swings - self.swings) / self.max_swings, -1)
-        elif not self.observation_space.contains(self._get_obs()) or self.swings > self.max_swings:
+        elif (
+            not self.observation_space.contains(self._get_obs())
+            or self.swings > self.max_swings
+        ):
             # Ball off course
             done = True
             reward = -1
@@ -172,9 +173,8 @@ class Colours:
 
 @dataclass
 class RenderConfig:
-    # Rendering
     screen_size: tuple = (10, 30)
-    render_scale: int = 10
+    render_scale: int = 30
     fps: int = 10
     frame_length: int = int(1 / fps * 1000)
 
@@ -188,13 +188,20 @@ class Ball:
 
     def render(self, screen: pygame.Surface) -> None:
         colour = Colours.ball
-        pygame.draw.circle(screen, colour, self.coordinates * 10, radius=1)
+        pygame.draw.circle(
+            screen,
+            colour,
+            (self.coordinates * RenderConfig.render_scale).astype(np.int32),
+            radius=1,
+        )
 
 
 class GolfCourse:
     def __init__(self, width: int, length: int, green_radius: int):
         self.bounds = np.array([0, 0, width, length + width], dtype=np.int32)
-        self.green_coordinates = np.array([width / 2, length + width / 2], dtype=np.float32)
+        self.green_coordinates = np.array(
+            [width / 2, length + width / 2], dtype=np.float32
+        )
         self.green_radius = green_radius
 
     def on_green(self, ball_coordinates: np.ndarray) -> bool:
@@ -207,21 +214,33 @@ class GolfCourse:
         pygame.draw.circle(
             screen,
             Colours.green,
-            self.green_coordinates * RenderConfig.render_scale,
+            (self.green_coordinates * RenderConfig.render_scale).astype(np.int32),
             radius=self.green_radius * RenderConfig.render_scale,
         )
         pygame.draw.line(
             screen,
             Colours.flagpole,
-            self.green_coordinates * RenderConfig.render_scale,
-            (self.green_coordinates + np.array([0, 0.5])) * RenderConfig.render_scale,
+            (self.green_coordinates * RenderConfig.render_scale).astype(np.int32),
+            (
+                (self.green_coordinates + np.array([0, 0.5]))
+                * RenderConfig.render_scale
+            ).astype(np.int32),
         )
         pygame.draw.polygon(
             screen,
             Colours.flag,
             [
-                (self.green_coordinates + np.array([0, 0.5])) * RenderConfig.render_scale,
-                (self.green_coordinates + np.array([0.2, 0.4])) * RenderConfig.render_scale,
-                (self.green_coordinates + np.array([0, 0.3])) * RenderConfig.render_scale,
-            ]
+                (
+                    (self.green_coordinates + np.array([0, 0.5]))
+                    * RenderConfig.render_scale
+                ).astype(np.int32),
+                (
+                    (self.green_coordinates + np.array([0.2, 0.4]))
+                    * RenderConfig.render_scale
+                ).astype(np.int32),
+                (
+                    (self.green_coordinates + np.array([0, 0.3]))
+                    * RenderConfig.render_scale
+                ).astype(np.int32),
+            ],
         )

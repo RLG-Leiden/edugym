@@ -35,7 +35,6 @@ class GolfEnv(gym.Env):
         self.width = width
         self.max_swings = max_swings
         self.stochasticity = stochasticity
-        self.seed = 0
 
         self.golf_course = GolfCourse(width, length, green_radius)
         self.ball = Ball()
@@ -91,10 +90,6 @@ class GolfEnv(gym.Env):
             return view
 
     def reset(self, options=None):
-        # We need the following line to seed self.np_random
-        self.seed += 1  # this must be done to make the env stochastic
-        super().reset(seed=self.seed)
-
         # Set location of the ball and green
         self.ball.move_to(np.array([self.width / 2] * 2, dtype=np.float32))
         self.swings = 0

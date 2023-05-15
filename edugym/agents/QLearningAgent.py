@@ -208,7 +208,7 @@ class QLearningAgentMultiDim(Agent):
 
         # Update the tabular estimate
         td_error = new_Qsa_estimate - self.Q_sa[state[0], state[1], action]
-        risk_scaling = 1. / (1. + np.exp(self.beta * td_error))
+        risk_scaling = 2 / (1 + np.exp(-self.beta * td_error))
         self.Q_sa[state[0], state[1], action] += self.learning_rate * td_error * risk_scaling
 
     def train(self, env, eval_env, epsilon, n_timesteps=10000, eval_interval=500):

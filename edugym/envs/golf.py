@@ -115,10 +115,10 @@ class GolfEnv(gym.Env):
         # Sample random deflection of shot
         perpendicular = self._perpendicular(direction)
         std_dev = self.stochasticity * (action**2)
-        directional_deflection = self._np_random.normal(scale=std_dev).astype(
+        directional_deflection = self.np_random.normal(scale=std_dev).astype(
             np.float32
         )
-        transverse_deflection = self._np_random.normal(scale=std_dev).astype(np.float32)
+        transverse_deflection = self.np_random.normal(scale=std_dev).astype(np.float32)
 
         # Obtain the ball displacement
         shot = (

@@ -23,11 +23,11 @@ class GolfEnv(gym.Env):
     def __init__(
         self,
         render_mode="terminal",
-        length=15,
+        length=17,
         width=7,
         green_radius=1,
-        max_swings=6,
-        stochasticity=0.01,
+        max_swings=17,
+        stochasticity=0.05,
     ):
         assert length % 2 == 1, "length of golf course must be an uneven number"
         assert width % 2 == 1, "width of golf course must be an uneven number"

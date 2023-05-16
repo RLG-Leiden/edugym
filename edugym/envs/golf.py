@@ -35,9 +35,9 @@ class GolfEnv(gym.Env):
         # We have 3 discrete actions, corresponding to the power of a swing: "putt", "chip", "drive"
         self.action_space = Discrete(3)
         self._action_to_distance = {
-            0: np.array([1], dtype=np.float32),  # putt
-            1: np.array([4], dtype=np.float32),  # chip
-            2: np.array([10], dtype=np.float32),  # drive
+            0: np.array([1]),  # putt
+            1: np.array([4]),  # chip
+            2: np.array([10]),  # drive
         }
 
         assert render_mode is None or render_mode in self.metadata["render_modes"]
@@ -45,7 +45,7 @@ class GolfEnv(gym.Env):
         self.screen = None
 
     def _get_obs(self):
-        return self.ball.coordinates.astype(np.int32)
+        return self.ball.coordinates.astype(int)
 
     def _get_info(self):
         return {}
@@ -74,7 +74,7 @@ class GolfEnv(gym.Env):
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
         # Set location of the ball and green
-        self.ball.move_to(np.array([self.width / 2] * 2, dtype=np.float32))
+        self.ball.move_to(np.array([self.width / 2] * 2))
         self.hits = 0
 
         return self._get_obs()

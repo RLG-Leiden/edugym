@@ -17,15 +17,15 @@ class GolfEnv(gym.Env):
         length=17,
         width=7,
         green_radius=1,
-        max_swings=17,
-        stochasticity=0.05,
+        max_hits=17,
+        stochasticity_level=0.05,
     ):
         assert length % 2 == 1, "length of golf course must be an uneven number"
         assert width % 2 == 1, "width of golf course must be an uneven number"
         self.length = length  # The length of the 2D golf course (start to center green)
         self.width = width
-        self.max_swings = max_swings
-        self.stochasticity = stochasticity
+        self.max_hits = max_hits
+        self.stochasticity_level = stochasticity_level
 
         self.golf_course = GolfCourse(width, length, green_radius)
         self.ball = Ball()
@@ -75,7 +75,7 @@ class GolfEnv(gym.Env):
         super().reset(seed=seed)
         # Set location of the ball and green
         self.ball.move_to(np.array([self.width / 2] * 2, dtype=np.float32))
-        self.swings = 0
+        self.hits = 0
 
         return self._get_obs()
 
@@ -86,7 +86,7 @@ class GolfEnv(gym.Env):
         return per
 
     def step(self, action: np.ndarray):
-        self.swings += 1
+        self.hits += 1
 
         # Map the action (element of {0,1,2}) to swing power
         action = self._action_to_distance[action]
@@ -97,11 +97,7 @@ class GolfEnv(gym.Env):
 
         # Sample random deflection of shot
         perpendicular = self._perpendicular(direction)
-        std_dev = self.stochasticity * (action**2)
-        directional_deflection = self.np_random.normal(scale=std_dev).astype(
-            np.float32
-        )
-        transverse_deflection = self.np_random.normal(scale=std_dev).astype(np.float32)
+        std_dev = self.stochasticity_level * action
 
         # Obtain the ball displacement
         shot = (
@@ -116,10 +112,10 @@ class GolfEnv(gym.Env):
         if self.golf_course.on_green(self.ball.coordinates):
             # Ball reached the green
             done = True
-            reward = max((self.max_swings - self.swings) / self.max_swings, -1)
+            reward = max((self.max_hits - self.hits) / self.max_hits, -1)
         elif (
             not self.observation_space.contains(self._get_obs())
-            or self.swings > self.max_swings
+            or self.hits > self.max_hits
         ):
             # Ball off course
             done = True

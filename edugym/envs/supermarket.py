@@ -36,9 +36,9 @@ blue = (0, 0, 255)
 
 
 class SupermarketEnv(gym.Env):
-    metadata = {"render.modes": ["human"]}
+    metadata = {"render.modes": ["inline", "graphic"]}
 
-    def __init__(self, step_timeout=0.0, noise=0.0):
+    def __init__(self, step_timeout=0.0, noise=0.0, render_mode="graphic"):
 
         """
         Initialize the Supermarket environment.
@@ -92,6 +92,7 @@ class SupermarketEnv(gym.Env):
 
         # Rendering
         self.pygame_initialized = False
+        self.render_mode = render_mode
 
         # Initialize the state
         self.noise = noise
@@ -344,7 +345,7 @@ class SupermarketEnv(gym.Env):
         info = {}
         return next_state, reward, done, False, info
 
-    def render(self, mode="graphic"):
+    def render(self):
         """
         Render the environment using Pygame.
         
@@ -354,7 +355,7 @@ class SupermarketEnv(gym.Env):
         Returns:
             np.ndarray: A 3D array of the RGB values of the pixels in the window.
         """
-
+        mode = self.render_mode
         assert mode in ["inline", "graphic"], print(
             "mode needs to be 'inline' or 'graphic'"
         )
@@ -491,11 +492,11 @@ def test():
     render_mode = "graphic"  # 'inline'
 
     # Initialize the environment
-    env = SupermarketEnv(step_timeout=0.1)
+    env = SupermarketEnv(step_timeout=0.1, render_mode=render_mode)
     state = env.reset()
 
     # Take some random actions in the environment
-    env.render(render_mode)
+    env.render()
 
     done = False
     while not done:
@@ -516,7 +517,7 @@ def test():
         next_state, reward, done, info = env.step(action)
 
         # Render the environment
-        env.render(render_mode)
+        env.render()
 
         print(
             f"State: {state}, Action: {action}, Next state {next_state}, Reward: {reward}, Done: {done}"

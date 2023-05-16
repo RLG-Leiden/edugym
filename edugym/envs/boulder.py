@@ -13,7 +13,7 @@ red = (255, 0, 0)
 green = (128, 128, 0)
 
 class BoulderEnv(gym.Env):
-    metadata = {"render_modes": ["terminal", "human"]}
+    metadata = {"render_modes": ["terminal", "graphic"]}
 
     def __init__(self, render_mode=None, height=10, n_grips=2, max_steps=100):
         '''
@@ -74,7 +74,7 @@ class BoulderEnv(gym.Env):
             print("")
             print("")
 
-        elif self.render_mode == 'human':
+        elif self.render_mode == 'graphic':
             # Initialize pygame
             if not self.pygame_initialized:
                 pygame.init()

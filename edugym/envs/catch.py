@@ -195,9 +195,8 @@ class Catch(gym.Env):
         self._board[self._paddle_y, self._paddle_x] = 1.0
         return self._board.copy()
 
-    def render(self, mode=None):
-        if mode is None:
-            mode = self.render_mode
+    def render(self):
+        mode = self.render_mode
         if mode == "graphic" or mode == "notebook":
             # Initialize pygame
             if not self.pygame_initialized:

@@ -92,7 +92,8 @@ class RoadrunnerEnv(gym.Env):
         Get additional information about the current state.
         """
         return {"target": self._target_location, "wall": self._wall_location, "steps": self._step_counter}
-
+    def render(self):
+        self._render_frame()
     def _render_frame(self):
         """
         Print the current state to the terminal or pygame screen.

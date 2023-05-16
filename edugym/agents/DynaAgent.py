@@ -160,7 +160,7 @@ class DynaAgent(Agent):
         for t in range(n_timesteps):
             # take action in environment
             a = self.select_action(s, epsilon)
-            s_next, r, done, _ = env.step(a)
+            s_next, r, done, truncated, _ = env.step(a)
 
             # update Q table & model
             self.update(s, a, s_next, r, update_model=True)
@@ -176,7 +176,7 @@ class DynaAgent(Agent):
                 mean_eval_returns.append(mean_eval_return)
 
             # Set next state
-            if done:
+            if done or truncated:
                 s = env.reset()
             else:
                 s = s_next
@@ -199,9 +199,9 @@ class DynaAgent(Agent):
             R_ep = 0
             for t in range(max_horizon):
                 a = self.select_action(s, epsilon)
-                s_prime, r, done, _ = eval_env.step(a)
+                s_prime, r, done, truncated, _ = eval_env.step(a)
                 R_ep += r
-                if done:
+                if done or truncated:
                     break
                 else:
                     s = s_prime

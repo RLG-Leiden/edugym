@@ -1,6 +1,6 @@
 import numpy as np
 import random
-import gym
+import gymnasium as gym
 import math
 
 
@@ -140,9 +140,9 @@ class DiscretizingQAgent:
         state = env.reset()
         for timestep in range(0, timesteps):
             action = self.select_action(state)
-            next_state, reward, done, info = env.step(action)
+            next_state, reward, done, truncated, info = env.step(action)
             self.update(state, action, next_state, reward)
-            if done:
+            if done or truncated:
                 state = env.reset()
             else:
                 state = next_state
@@ -154,8 +154,8 @@ class DiscretizingQAgent:
         state = env.reset()
         for _ in range(0, timesteps):
             action = q.select_action(state, deterministic=True)
-            next_state, reward, done, info = env.step(action)
-            if done:
+            next_state, reward, done, truncated, info = env.step(action)
+            if done or truncated:
                 state = env.reset()
             else:
                 state = next_state

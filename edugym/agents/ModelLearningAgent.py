@@ -101,9 +101,9 @@ def test():
     s = env.reset()
     for t in range(n_steps):
         a = MLAgent.select_action(s)
-        s_prime, r, done, _ = env.step(a)
+        s_prime, r, done, truncated, _ = env.step(a)
         MLAgent.update(s, a, s_prime, r, done)
-        if done:
+        if done or truncated:
             env.reset()
         else:
             s = s_prime

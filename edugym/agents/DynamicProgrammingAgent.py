@@ -111,9 +111,9 @@ class DynamicProgrammingAgent(Agent):
             R_ep = 0
             for t in range(max_horizon):
                 a = self.select_action(s, epsilon)
-                s_prime, r, done, _ = eval_env.step(a)
+                s_prime, r, done, truncated, _ = eval_env.step(a)
                 R_ep += r
-                if done:
+                if done or truncated:
                     break
                 else:
                     s = s_prime
@@ -139,9 +139,9 @@ def test():
 
     done = False
     s = env.reset()
-    while not done:
+    while not done and not truncated:
         a = DPAgent.select_action(s)
-        s_next, r, done, _ = env.step(a)
+        s_next, r, done, truncated,  _ = env.step(a)
         env.render()
         s = s_next
     env.close()

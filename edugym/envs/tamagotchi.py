@@ -9,14 +9,14 @@ class TamagotchiEnv(gym.Env):
     
     metadata = {"render_modes": ["terminal"]}
 
-    def __init__(self, vocab = ["play", "sleep", "feed", "clean", "nothing"], max_msg_length=1, tau=1.0, steps_per_episode=100, render_mode=None):
+    def __init__(self, vocab = ["play", "sleep", "feed", "clean"], max_msg_length=1, tau=1.0, steps_per_episode=100, render_mode=None):
         """
         Tamagotchi environment.
 
         Args:
-        vocab (dict, optional): The vocabulary used to generate messages. Defaults to {"subject":["I", "You"], "verbs": ["play", "sleep", "feed", "clean", "nothing"]}.
-        max_msg_length (int, optional): The maximum length of the messages. Defaults to 2.
-        tau (float, optional): The temperature parameter for the softmax function. Defaults to 1.0.
+        vocab (dict, optional): The vocabulary used to generate messages. Defaults to ["play", "sleep", "feed", "clean"].
+        max_msg_length (int, optional): The maximum length of the messages. Defaults to 1.
+        tau (float, optional): The temperature parameter for the softmax function, this determines the informativeness of the utterances. Defaults to 1.0.
         steps_per_episode (int, optional): The maximum number of steps per episode. Defaults to 100.
         communicate (bool, optional): Whether the agents communicates about its internal variables. Defaults to True.
         render_mode (str, optional): The render mode. Defaults to None.
@@ -28,26 +28,26 @@ class TamagotchiEnv(gym.Env):
         self.vocab = vocab
         self.max_msg_length = max_msg_length
         
-        # Observation space: the words used to make utterances of a speficied length
-        self.state_dims = np.concatenate([[len(vocab)]*(max_msg_length)], axis=None)
-        
-        self.n_states = np.prod(self.state_dims)
-        self.observation_space = spaces.MultiDiscrete(self.state_dims)
-        
-        # Action space: 5 actions
-        self.action_space = spaces.Discrete(5)
-
         # Max number of steps per episode
         self.steps_per_episode = steps_per_episode
         self.step_count = 0
 
         # Joy, Energy, Food, Hygiene
         self.internal_vars = np.array([100, 100, 100, 100])
-        self.happiness = 50
-        self.hp = 50
+        self.happiness = 100
+        self.hp = 100
         self.weights = np.ones(len(self.internal_vars))
-        self.required_action = self.vocab.index("nothing")
+        self.required_action = self.vocab.index("play")
         self.tau = tau
+
+        # Observation space: the words used to make utterances of a speficied length
+        self.state_dims = np.concatenate([[101], [len(self.vocab)]*(max_msg_length)], axis=None)
+        
+        self.n_states = np.prod(self.state_dims)
+        self.observation_space = spaces.MultiDiscrete(self.state_dims)
+        
+        # Action space: 4 actions
+        self.action_space = spaces.Discrete(4)
 
         self.tamagotchi_msg = self.generate_message()
 
@@ -56,7 +56,18 @@ class TamagotchiEnv(gym.Env):
     
 
     def reset(self, seed=None, options=None):
-        # print('Resetting..')
+        """
+        Resets the environment to its initial state.
+
+        Args:
+        seed (int, optional): The seed for the random number generator. Defaults to None.
+        options (dict, optional): The options for the environment. Defaults to None.
+
+        Returns:
+        state (np.array): The initial state of the environment.
+        
+        """
+
         super().reset(seed=seed)
 
         self.step_count = 0
@@ -74,24 +85,19 @@ class TamagotchiEnv(gym.Env):
         Calculates the required action based on the internal variables.
         The required action is the variable with the highest weight.
 
-        When the Tamagotchi is happy, no action is required. 
-
         Returns:
         The index of the required action.
         """
+
+        # get the highest weights, in case of multiple highest weights, select one at random
+        highest_weights = np.argwhere(self.weights == np.amax(self.weights)).flatten()
         
-        if self.happiness >= 85:
-            return self.vocab.index("nothing")
+        if len(highest_weights) > 1:
+            # multiple variables require attention, return a random index from the highest weights
+            return random.choice(highest_weights)
         else:
-            # get the highest weights, in case of multiple highest weights, select one at random
-            highest_weights = np.argwhere(self.weights == np.amax(self.weights)).flatten()
-            
-            if len(highest_weights) > 1:
-                # multiple variables require attention, return a random index from the highest weights
-                return random.choice(highest_weights)
-            else:
-                # return the index of the highest weight
-                return highest_weights[0]
+            # return the index of the highest weight
+            return highest_weights[0]
     
 
     def generate_message(self):
@@ -108,16 +114,7 @@ class TamagotchiEnv(gym.Env):
         #calculate softmax over the weights with a temperature variable
         softmax_action = np.exp(self.weights / self.tau) / np.sum(np.exp(self.weights / self.tau))
 
-        verbs = np.random.choice(self.vocab[:len(self.weights)], p=softmax_action, size=self.max_msg_length, replace=True)
-
-        # If the Tamagotchi is happy, it will not ask for anything
-        if self.required_action == self.vocab.index("nothing"):
-            # create a placeholder message of the required length
-            placeholder = list(np.random.choice(self.vocab[:len(self.weights)], size=self.max_msg_length, replace=True))
-            # replace the first token with the required action
-            placeholder[0] = "nothing"
-        
-            verbs = placeholder
+        verbs = np.random.choice(self.vocab[:len(self.weights)], p=softmax_action, size=self.max_msg_length, replace=False)
         
         verbs = [self.vocab.index(verb) for verb in verbs]
 
@@ -128,8 +125,8 @@ class TamagotchiEnv(gym.Env):
         """
         Returns the current state of the environment as a vector including the hp and message.
         """
-    
-        return self.tamagotchi_msg
+        
+        return np.concatenate([[self.hp], self.tamagotchi_msg])
         
 
     def get_info(self):
@@ -140,7 +137,7 @@ class TamagotchiEnv(gym.Env):
         """
         This method takes a vectorized state and turns it into its unique state index.
 
-        Parameters:
+        Args:
         state (np.array): The vectorized state.
         
         Returns:
@@ -162,12 +159,11 @@ class TamagotchiEnv(gym.Env):
         Argmax on the weights is thus the variable that requires the most attention.
 
         Returns:
-        The sum of the weighted internal variables, shifted by 50 to be in the range [-50, 50]    
+        The sum of the weighted internal variables.    
         """
         
         self.weights = np.exp(-1 * self.internal_vars / 100)
-        # self.weights = -1 * self.internal_vars / 100
-        
+
         return np.sum((self.internal_vars - 50) * self.weights)
 
 
@@ -182,15 +178,17 @@ class TamagotchiEnv(gym.Env):
         hp_change = self.happiness / 10
         
         # return the hp value and cap it to the range [0, 100]
-        return max(0, min(100, self.hp + hp_change))
+        return int(max(0, min(100, self.hp + hp_change)))
 
 
     def step(self, action):
         """
-        Make step in environment. When the required action is chosen, the internal variables corresponding to that action is updated positively.
-        When the wrong action is chosen, all internal variables are updated negatively (but the action is still performed).
+        Make step in environment. When the required action is chosen, 
+        the internal variables corresponding to that action is updated positively.
+        When the wrong action is chosen, all internal variables are updated 
+        negatively (but the action is still performed).
 
-        Parameters:
+        Args:
         action (int): The index of the chosen action.
 
         Returns:
@@ -204,19 +202,16 @@ class TamagotchiEnv(gym.Env):
 
         # Update the internal variables based on the chosen action - Joy, Energy, Food, Hygiene
         if action == 0: # play
-            self.internal_vars += np.array([50, -3, -3, -3])
+            self.internal_vars += np.array([30, -5, -5, -5])
 
         elif action == 1: # sleep
-            self.internal_vars += np.array([-3, 50, -3, -3])
+            self.internal_vars += np.array([-5, 30, -5, -5])
             
         elif action == 2: # feed
-            self.internal_vars += np.array([-3, -3, 50, -3])
+            self.internal_vars += np.array([-5, -5, 30, -5])
 
         elif action == 3: # clean
-            self.internal_vars += np.array([-3, -3, -3, 50])
-            
-        elif action == 4: # no-op
-            self.internal_vars += np.array([-5, -5, -5, -5])
+            self.internal_vars += np.array([-5, -5, -5, 30])
 
         if action != self.required_action:
             # If the wrong action is chosen, the internal variables are updated negatively

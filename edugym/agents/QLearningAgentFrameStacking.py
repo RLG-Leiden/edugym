@@ -2,7 +2,6 @@ import numpy as np
 import random
 from gymnasium import Env
 from collections import deque
-import plotly.graph_objects as go
 
 from edugym.envs.memorycorridor import MemoryCorridorEnv
 
@@ -149,6 +148,7 @@ def test():
     average_learning_curve = np.mean(np.array(results), axis=0)
 
     # Generate figure
+    import plotly.graph_objects as go
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=time_steps, y=average_learning_curve, name="Q-learning with framestacking"))
 

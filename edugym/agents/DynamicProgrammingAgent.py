@@ -6,7 +6,6 @@ Edugym: Dynamic Programming Agent
 """
 
 import numpy as np
-import plotly.graph_objects as go
 
 from edugym.agents.Agent import Agent
 from edugym.envs.supermarket import SupermarketEnv
@@ -165,6 +164,7 @@ def test():
     mean_performance = np.mean(performances, axis=1)
 
     # Plot results
+    import plotly.graph_objects as go
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=noise_levels, y=np.array(mean_performance)))
     fig.update_layout(

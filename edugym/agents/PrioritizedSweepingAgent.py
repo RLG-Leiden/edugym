@@ -7,7 +7,6 @@ Edugym: Prioritized Sweeping Agent
 
 import numpy as np
 from queue import PriorityQueue
-import plotly.graph_objects as go
 
 from edugym.agents.Agent import Agent
 from edugym.envs.supermarket import SupermarketEnv
@@ -239,6 +238,7 @@ def test():
         print("Completed planning budget: {}".format(planning_budget))
 
     # Generate figure
+    import plotly.graph_objects as go
     fig = go.Figure()
     for i, planning_budget in enumerate(planning_budget_seconds):
         name = (

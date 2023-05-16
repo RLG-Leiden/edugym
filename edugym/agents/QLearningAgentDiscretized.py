@@ -6,7 +6,6 @@ Edugym: Q-learning Agent
 """
 
 import numpy as np
-import plotly.graph_objects as go
 import gymnasium as gym
 import random
 from edugym.agents.Agent import Agent
@@ -241,6 +240,7 @@ def test():
     average_learning_curve = np.mean(np.array(results), axis=0)
 
     # Generate figure
+    import plotly.graph_objects as go
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=time_steps, y=average_learning_curve, name="Q-learning"))
 

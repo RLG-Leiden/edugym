@@ -219,13 +219,14 @@ class SupermarketEnv(gym.Env):
                     self.p_sas[s, a, s_prime] = 1.0  # update transition table
                     self.r_sas[s, a, s_prime] += extra_reward
 
-    def reset(self):
+    def reset(self, seed=None):
         """
         Reset the supermarket environment to its initial state.
 
         Returns:
             state (np.ndarray): The current state of the environment.
         """
+        super().reset(seed=seed)
 
         # Create the state
         vector_state = np.array(
@@ -341,7 +342,7 @@ class SupermarketEnv(gym.Env):
         self.state = next_state
         self.done = done
         info = {}
-        return next_state, reward, done, info
+        return next_state, reward, done, False, info
 
     def render(self, mode="graphic"):
         """

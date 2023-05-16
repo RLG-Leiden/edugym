@@ -125,14 +125,12 @@ class BoulderEnv(gym.Env):
             pygame.time.wait(25)
 
 
-    def reset(self, seed=1, options=None):
-        # We need the following line to seed self.np_random
+    def reset(self, seed=None, options=None):
         super().reset(seed=seed)
-        np.random.seed(seed)
 
         # Initialize positions of grips
         self._agent_location = np.array([0], dtype=int)
-        self.grips = np.random.choice(self.n_grips, self.height)
+        self.grips = self.np_random.choice(self.n_grips, self.height)
         self.steps_taken = 0
 
         observation = self._get_obs()

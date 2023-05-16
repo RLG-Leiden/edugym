@@ -45,9 +45,10 @@ class MemoryCorridorEnv(gymnasium.Env):
             return 0
         return 1
 
-    def reset(self):
+    def reset(self, seed=None):
+        super().reset(seed=seed)
         # Generate a new set of self.num_doors doors and the sequence of the correct doors
-        self._correct_door_path = [np.random.randint(self.num_doors)]
+        self._correct_door_path = [self.np_random.integers(self.num_doors, size=1)[0]]
         self._depth = 1
         self._successfull_opens = 0
         self._terminated = False
@@ -67,7 +68,7 @@ class MemoryCorridorEnv(gymnasium.Env):
 
         elif self._on_last_door:
             # Last door of sequence, generate a new final door and start from beginning of sequence
-            self._correct_door_path.append(np.random.randint(self.num_doors))
+            self._correct_door_path.append(self.np_random.integers(self.num_doors, size=1)[0])
             self._depth = 1
             self._successfull_opens += 1
             if self.verbose > 0:

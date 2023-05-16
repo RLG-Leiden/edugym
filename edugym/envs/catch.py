@@ -15,7 +15,7 @@
 # ============================================================================
 """Catch reinforcement learning environment."""
 
-import gym
+import gymnasium as gym
 import numpy as np
 import pygame
 import sys
@@ -85,13 +85,12 @@ class Catch(gym.Env):
         Args:
           rows: number of rows.
           columns: number of columns.
-          seed: random seed for the RNG.
         """
+        super().reset(seed=seed)
         self._rows = rows
         self._columns = columns
         self.width = columns
         self.height = rows
-        self._rng = np.random.RandomState(seed)
         self._board = np.zeros((rows, columns), dtype=np.float32)
         self._ball_x = None
         self._ball_y = None
@@ -106,10 +105,11 @@ class Catch(gym.Env):
         self.pygame_initialized = False
         self.render_mode = render_mode
 
-    def reset(self):
+    def reset(self, seed=None):
         """Returns the first `TimeStep` of a new episode."""
+        super().reset(seed=seed)
         self._reset_next_step = False
-        self._ball_x = self._rng.randint(self._columns)
+        self._ball_x = self.np_random.integers(self._columns, size=1)[0]
         self._ball_y = 0
         self._paddle_x = self._columns // 2
         self._paddle_y = self._rows - 1
@@ -134,9 +134,9 @@ class Catch(gym.Env):
             reward = 1.0 if self._paddle_x == self._ball_x else -1.0
             self._reset_next_step = True
             self._total_regret += 1.0 - reward
-            return self._observation(), reward, True, {}
+            return self._observation(), reward, True, False, {}
 
-        return self._observation(), 0.0, False, {}
+        return self._observation(), 0.0, False, False, {}
 
     def observation_spec(self, observation_type):
         """Returns the observation spec."""
@@ -212,36 +212,34 @@ class Catch(gym.Env):
                 self.pygame_initialized = True
 
             # Set background color
-            self.screen.fill(white)
-            
+            self.screen.fill(black)
+            grid_width = 5
+            # Draw white bg
+            pygame.draw.rect(self.screen, white, pygame.Rect(
+                grid_width,
+                grid_width,
+                screen_width - 10,
+                screen_height - 10,
+            ))
+
+
             # Draw Ball
             pygame.draw.rect(self.screen, yellow, pygame.Rect(
-                self._ball_x * self.cell_size,
-                max(0, (self._ball_y)) * self.cell_size,
-                self.cell_size,
-                self.cell_size,
+                (self._ball_x * self.cell_size) + grid_width,
+                (max(0, (self._ball_y)) * self.cell_size) + grid_width,
+                self.cell_size - grid_width*2,
+                self.cell_size - grid_width*2,
             ))
             # Draw Paddle
             pygame.draw.rect(self.screen, green, pygame.Rect(
-                self._paddle_x * self.cell_size,
-                (self._paddle_y) * self.cell_size + (self.cell_size/2),
-                self.cell_size,
-                self.cell_size / 2,
+                (self._paddle_x * self.cell_size) + grid_width,
+                ((self._paddle_y) * self.cell_size + (self.cell_size/2)) + grid_width,
+                self.cell_size  - grid_width*2,
+                (self.cell_size / 2) - grid_width*2,
             ))
             
             # Flip the display
             pygame.display.flip()
-
-            # convert image so it can be displayed in OpenCV
-            # if colab_rendering:
-            # import cv2
-            # from google.colab.patches import cv2_imshow
-            # from google.colab import output
-            #     output.clear()
-            #     view = pygame.surfarray.array3d(self.screen)
-            #     view = view.transpose([1, 0, 2])
-            #     img_bgr = cv2.cvtColor(view, cv2.COLOR_RGB2BGR)
-            #     cv2_imshow(img_bgr)
             if is_notebook():
                 from IPython.display import Image, display
                 pygame.image.save(self.screen, 'frame.png')
@@ -273,7 +271,7 @@ gym.register(
 )
 
 gym.register(
-    id="Catch-minimal-v0",
+    id="Catch-vectorized-v0",
     entry_point="catch:Catch",
     kwargs={"observation_type": OBSERVATION_TYPE_MINIMAL},
 )
@@ -297,7 +295,7 @@ for size in range(2, 9):
         kwargs={"rows": 10 * size, "columns": 5 * size},
     )
     gym.register(
-        id=f"Catch-{size}-minimal-v0",
+        id=f"Catch-{size}-vectorized-v0",
         entry_point="catch:Catch",
         kwargs={
             "observation_type": OBSERVATION_TYPE_MINIMAL,
@@ -321,5 +319,40 @@ for size in range(2, 9):
             "observation_type": OBSERVATION_TYPE_DEFAULT_ONEHOT,
             "rows": 10 * size,
             "columns": 5 * size,
+        },
+    )
+
+
+for size in range(2, 21):
+    gym.register(
+        id=f"Catch-{size}x{size}-v0",
+        entry_point="catch:Catch",
+        kwargs={"rows": size, "columns": size},
+    )
+    gym.register(
+        id=f"Catch-{size}x{size}-vectorized-v0",
+        entry_point="catch:Catch",
+        kwargs={
+            "observation_type": OBSERVATION_TYPE_MINIMAL,
+            "rows": size,
+            "columns": size,
+        },
+    )
+    gym.register(
+        id=f"Catch-{size}x{size}-color-v0",
+        entry_point="catch:Catch",
+        kwargs={
+            "observation_type": OBSERVATION_TYPE_DEFAULT_WITH_COLORS,
+            "rows": size,
+            "columns": size,
+        },
+    )
+    gym.register(
+        id=f"Catch-{size}x{size}-onehot-v0",
+        entry_point="catch:Catch",
+        kwargs={
+            "observation_type": OBSERVATION_TYPE_DEFAULT_ONEHOT,
+            "rows": size,
+            "columns": size,
         },
     )

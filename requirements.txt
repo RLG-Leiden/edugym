@@ -5,4 +5,8 @@ pygame
 queue
 time
 sys
-
+black
+time
+scipy
+sys
+pandas

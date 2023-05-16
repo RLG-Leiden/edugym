@@ -22,7 +22,7 @@ class GolfEnv(gym.Env):
 
     def __init__(
         self,
-        render_mode="terminal",
+        render_mode="graphic",
         length=17,
         width=7,
         green_radius=1,
@@ -89,7 +89,8 @@ class GolfEnv(gym.Env):
                 pygame.image.save(self.screen, "frame.png")
             return view
 
-    def reset(self, options=None):
+    def reset(self, seed=None, options=None):
+        super().reset(seed=seed)
         # Set location of the ball and green
         self.ball.move_to(np.array([self.width / 2] * 2, dtype=np.float32))
         self.swings = 0
@@ -148,7 +149,7 @@ class GolfEnv(gym.Env):
         observation = self._get_obs()
         info = self._get_info()
 
-        return observation, reward, done, info
+        return observation, reward, done, False, info
 
     def close(self):
         if self.screen:

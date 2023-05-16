@@ -1,5 +1,3 @@
-#@title Environment implementation
-#@markdown Execute the cell to run all the pre-requisite code.
 import gymnasium
 import pygame
 import abc
@@ -8,15 +6,6 @@ import sys
 from dataclasses import dataclass
 from gymnasium.spaces.box import Box as sBox
 from gymnasium.spaces.multi_discrete import MultiDiscrete
-
-colab_rendering = 'google.colab' in sys.modules
-if colab_rendering:
-    import cv2
-    from google.colab.patches import cv2_imshow
-    from google.colab import output
-    import os
-    os.environ["SDL_VIDEODRIVER"] = "dummy"
-
 
 class TrashBot(gymnasium.Env):
     def __init__(self, container_width=80, render_mode='human',
@@ -118,11 +107,6 @@ class TrashBot(gymnasium.Env):
             obj.render(self.screen)
         pygame.display.flip()
 
-        if colab_rendering:
-            output.clear()
-            view = pygame.surfarray.array3d(self.screen)
-            view = view.transpose([1, 0, 2])
-            img_bgr = cv2.cvtColor(view, cv2.COLOR_RGB2BGR)
         if mode == 'human' and colab_rendering:
             cv2_imshow(img_bgr)
             pygame.time.wait(TrashBotConfig.frame_length)

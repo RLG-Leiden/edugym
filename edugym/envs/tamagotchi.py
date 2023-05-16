@@ -244,7 +244,8 @@ class TamagotchiEnv(gym.Env):
         return state, reward, done, truncated, info
 
 
-    def render(self, mode="terminal"):
+    def render(self):
+        mode = self.render_mode
         if mode == "terminal":
           print(f"HP: {self.hp}, Happiness: {self.happiness}, Internal vars: {self.internal_vars}, Required action: {self.required_action}, Tamagotchi message: {self.tamagotchi_msg}")
           print("-" * 100)

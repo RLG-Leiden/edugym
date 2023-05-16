@@ -1,153 +1,241 @@
-import numpy as np
+import sys
+from dataclasses import dataclass
 
 import gymnasium as gym
-from gymnasium import spaces
+import numpy as np
+import pygame
+from gymnasium.spaces import Discrete, MultiDiscrete
+
+colab_rendering = "google.colab" in sys.modules
+if colab_rendering:
+    import os
+
+    import cv2
+    from google.colab import output
+    from google.colab.patches import cv2_imshow
+
+    os.environ["SDL_VIDEODRIVER"] = "dummy"
 
 
 class GolfEnv(gym.Env):
-    metadata = {"render_modes": {"terminal"}}
+    metadata = {"render_modes": {"graphic"}}
 
-    ascii_green = [
-        ".....................",
-        ".....................",
-        ".....................",
-        "......  <<|    ......",
-        ".....     |     .....",
-        "......         ......",
-        ".....................",
-        ".....................",
-        ".....................",
-    ]
+    def __init__(
+        self,
+        render_mode="terminal",
+        length=17,
+        width=7,
+        green_radius=1,
+        max_swings=17,
+        stochasticity=0.05,
+    ):
+        assert length % 2 == 1, "length of golf course must be an uneven number"
+        assert width % 2 == 1, "width of golf course must be an uneven number"
+        self.length = length  # The length of the 2D golf course (start to center green)
+        self.width = width
+        self.max_swings = max_swings
+        self.stochasticity = stochasticity
 
-    def __init__(self, render_mode=None, length=4, discrete=True):
-        self.length = length  # The length of the 2D golf course
-        self.discrete = discrete
+        self.golf_course = GolfCourse(width, length, green_radius)
+        self.ball = Ball()
 
-        # Observations are dictionaries with the ball and green location.
-        self.observation_space = spaces.Dict(
-            {
-                "ball": spaces.Box(
-                    low=np.array([0, 0], dtype=np.float32),
-                    high=np.array([2, self.length + 1], dtype=np.float32),
-                    dtype=np.float32,
-                ),
-                "green": spaces.Box(
-                    low=np.array([0, 0], dtype=np.float32),
-                    high=np.array([2, self.length], dtype=np.float32),
-                    dtype=np.float32,
-                ),
-            }
-        )
+        self.observation_space = MultiDiscrete(self.golf_course.bounds[2:])
 
-        if discrete:
-            # We have 3 discrete actions, corresponding to the power of a swing: "soft", "medium", "hard"
-            self.action_space = spaces.Discrete(3)
-        else:
-            self.action_space = spaces.Box(
-                low=np.float32(0), high=np.float32(3), dtype=np.float32
-            )
-
-        """
-        The following dictionary maps abstract actions from `self.action_space` to
-        the direction we will walk in if that action is taken.
-        I.e. 0 corresponds to "right", 1 to "up" etc.
-        """
-        self._action_to_speed = {
-            0: np.array([1], dtype=np.float32),  # soft
-            1: np.array([2], dtype=np.float32),  # medium
-            2: np.array([3], dtype=np.float32),  # hard
+        # We have 3 discrete actions, corresponding to the power of a swing: "putt", "chip", "drive"
+        self.action_space = Discrete(3)
+        self._action_to_distance = {
+            0: np.array([1], dtype=np.float32),  # putt
+            1: np.array([4], dtype=np.float32),  # chip
+            2: np.array([10], dtype=np.float32),  # drive
         }
 
         assert render_mode is None or render_mode in self.metadata["render_modes"]
         self.render_mode = render_mode
-
-        self.ascii_render = self.ascii_green + [self.ascii_green[-1]] * (length - 1) * 4
+        self.screen = None
 
     def _get_obs(self):
-        return {"ball": self._ball_location, "green": self._green_location}
+        return self.ball.coordinates.astype(np.int32)
 
     def _get_info(self):
         return {}
 
     def render(self):
-        x_ball = round(self._ball_location[0] * 10)
-        y_ball = round(self._ball_location[1] * 4)
-
-        for i, line in enumerate(self.ascii_render, 1):
-            if i == (len(self.ascii_render) - y_ball):
-                print(line[:x_ball] + "o" + line[x_ball + 1 :])
-            else:
-                print(line)
-        print()
-
-    def reset(self, seed=0, options=None):
-        # We need the following line to seed self.np_random
-        super().reset(seed=seed)
-
-        # Get the degree of stochasiticity from options
-        assert isinstance(options, dict) and "stochasticity" in options
-        self.stochasticity = options["stochasticity"]
-
-        # Choose the agent's location uniformly at random
-        self._ball_location = np.array([1, 0], dtype=np.float32)
-        self._green_location = np.array([1, self.length], dtype=np.float32)
-
-        observation = self._get_obs()
-        info = self._get_info()
-
         if self.render_mode == "terminal":
-            self.render()
+            raise NotImplementedError("terminal render not imlemented yet")
+        if self.render_mode == "graphic":
+            view = None
+            if self.screen is None:
+                pygame.init()
+                self.screen = pygame.display.set_mode(
+                    self.golf_course.bounds[2:] * RenderConfig.render_scale
+                )
+                pygame.display.set_caption("Golf Environment")
+            self.screen.fill(Colours.background)
+            for obj in [self.golf_course, self.ball]:
+                obj.render(self.screen)
 
-        return observation, info
+            # Flip the display
+            self.screen = pygame.transform.flip(self.screen, False, True)
 
-    def _compute_intermediate_reward(self):
-        return 0
+            if colab_rendering:
+                output.clear()
+                view = pygame.surfarray.array3d(self.screen)
+                view = view.transpose([1, 0, 2])
+                img_bgr = cv2.cvtColor(view, cv2.COLOR_RGB2BGR)
+                # if self.render_mode == "human" and colab_rendering:
+                cv2_imshow(img_bgr)
+                pygame.time.wait(RenderConfig.frame_length)
+            else:
+                pygame.image.save(self.screen, "frame.png")
+            return view
 
-    def _perpendicular(self, vec):
+    def reset(self, options=None):
+        # Set location of the ball and green
+        self.ball.move_to(np.array([self.width / 2] * 2, dtype=np.float32))
+        self.swings = 0
+
+        return self._get_obs()
+
+    def _perpendicular(self, vec) -> np.ndarray:
         per = np.zeros_like(vec)
         per[0] = -vec[1]
         per[1] = vec[0]
         return per
 
-    def step(self, action):
-        if self.discrete:
-            # Map the action (element of {0,1,2}) to swing power
-            action = self._action_to_speed[action]
+    def step(self, action: np.ndarray):
+        self.swings += 1
+
+        # Map the action (element of {0,1,2}) to swing power
+        action = self._action_to_distance[action]
 
         # Get unitvector of ball direction
-        distance = self._green_location - self._ball_location
+        distance = self.golf_course.green_coordinates - self.ball.coordinates
         direction = distance / np.linalg.norm(distance)
 
         # Sample random deflection of shot
         perpendicular = self._perpendicular(direction)
-        std_dev = action**self.stochasticity
-        deflection = self._np_random.normal(scale=std_dev).astype(np.float32)
+        std_dev = self.stochasticity * (action**2)
+        directional_deflection = self.np_random.normal(scale=std_dev).astype(
+            np.float32
+        )
+        transverse_deflection = self.np_random.normal(scale=std_dev).astype(np.float32)
 
         # Obtain the ball displacement
-        shot = direction * action + perpendicular * deflection
+        shot = (
+            direction * (action + directional_deflection)
+            + perpendicular * transverse_deflection
+        )
 
         # Update the ball's location
-        self._ball_location += shot
+        self.ball.move_to(self.ball.coordinates + shot)
 
         # An episode is done iff the agent has reached the target OR the agent has reached the wall
-        if np.linalg.norm(self._green_location - self._ball_location) <= 0.5:
-            print("REACHED THE GREEN")
-            terminated = True
-            reward = 1
-        elif not self.observation_space["ball"].contains(
-            self._ball_location.astype(np.float32)
+        if self.golf_course.on_green(self.ball.coordinates):
+            # Ball reached the green
+            done = True
+            reward = max((self.max_swings - self.swings) / self.max_swings, -1)
+        elif (
+            not self.observation_space.contains(self._get_obs())
+            or self.swings > self.max_swings
         ):
-            print("BALL OFF COURSE")
-            terminated = True
-            reward = -100
+            # Ball off course
+            done = True
+            reward = -1
         else:
-            terminated = False
-            reward = self._compute_intermediate_reward()
+            done = False
+            reward = 0
 
         observation = self._get_obs()
         info = self._get_info()
 
-        if self.render_mode == "terminal":
-            self.render()
+        return observation, reward, done, info
 
-        return observation, reward, terminated, False, info
+    def close(self):
+        if self.screen:
+            pygame.quit()
+
+
+@dataclass
+class Colours:
+    grass = (0, 154, 23)
+    green = (89, 166, 8)
+    ball = (255, 255, 255)
+    flagpole = (255, 255, 255)
+    flag = (255, 0, 0)
+    background = (255, 255, 255)
+    darkgrey = (64, 64, 64)
+
+
+@dataclass
+class RenderConfig:
+    screen_size: tuple = (10, 30)
+    render_scale: int = 30
+    fps: int = 10
+    frame_length: int = int(1 / fps * 1000)
+
+
+class Ball:
+    def __init__(self) -> None:
+        pass
+
+    def move_to(self, coordinates: np.ndarray) -> None:
+        self.coordinates = coordinates
+
+    def render(self, screen: pygame.Surface) -> None:
+        colour = Colours.ball
+        pygame.draw.circle(
+            screen,
+            colour,
+            (self.coordinates * RenderConfig.render_scale).astype(np.int32),
+            radius=1,
+        )
+
+
+class GolfCourse:
+    def __init__(self, width: int, length: int, green_radius: int):
+        self.bounds = np.array([0, 0, width, length + width], dtype=np.int32)
+        self.green_coordinates = np.array(
+            [width / 2, length + width / 2], dtype=np.float32
+        )
+        self.green_radius = green_radius
+
+    def on_green(self, ball_coordinates: np.ndarray) -> bool:
+        vector_to_green_center = ball_coordinates - self.green_coordinates
+        return np.linalg.norm(vector_to_green_center) < self.green_radius
+
+    def render(self, screen: pygame.Surface):
+        scaled_bounds = self.bounds * RenderConfig.render_scale
+        pygame.draw.rect(screen, Colours.grass, scaled_bounds)
+        pygame.draw.circle(
+            screen,
+            Colours.green,
+            (self.green_coordinates * RenderConfig.render_scale).astype(np.int32),
+            radius=self.green_radius * RenderConfig.render_scale,
+        )
+        pygame.draw.line(
+            screen,
+            Colours.flagpole,
+            (self.green_coordinates * RenderConfig.render_scale).astype(np.int32),
+            (
+                (self.green_coordinates + np.array([0, 0.5]))
+                * RenderConfig.render_scale
+            ).astype(np.int32),
+        )
+        pygame.draw.polygon(
+            screen,
+            Colours.flag,
+            [
+                (
+                    (self.green_coordinates + np.array([0, 0.5]))
+                    * RenderConfig.render_scale
+                ).astype(np.int32),
+                (
+                    (self.green_coordinates + np.array([0.2, 0.4]))
+                    * RenderConfig.render_scale
+                ).astype(np.int32),
+                (
+                    (self.green_coordinates + np.array([0, 0.3]))
+                    * RenderConfig.render_scale
+                ).astype(np.int32),
+            ],
+        )

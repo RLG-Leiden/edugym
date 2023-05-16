@@ -111,16 +111,6 @@ class BoulderEnv(gym.Env):
             # Flip the display
             pygame.display.flip()
 
-            '''
-            # convert image so it can be displayed in OpenCV
-            if colab_rendering:
-                output.clear()
-                view = pygame.surfarray.array3d(self.screen)
-                view = view.transpose([1, 0, 2])
-                img_bgr = cv2.cvtColor(view, cv2.COLOR_RGB2BGR)
-                cv2_imshow(img_bgr)
-            '''
-
             # Wait for a short time to slow down the rendering
             pygame.time.wait(25)
 

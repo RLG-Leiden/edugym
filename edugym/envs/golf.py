@@ -6,15 +6,6 @@ import numpy as np
 import pygame
 from gymnasium.spaces import Discrete, MultiDiscrete
 
-colab_rendering = "google.colab" in sys.modules
-if colab_rendering:
-    import os
-
-    import cv2
-    from google.colab import output
-    from google.colab.patches import cv2_imshow
-
-    os.environ["SDL_VIDEODRIVER"] = "dummy"
 
 
 class GolfEnv(gym.Env):
@@ -77,16 +68,7 @@ class GolfEnv(gym.Env):
             # Flip the display
             self.screen = pygame.transform.flip(self.screen, False, True)
 
-            if colab_rendering:
-                output.clear()
-                view = pygame.surfarray.array3d(self.screen)
-                view = view.transpose([1, 0, 2])
-                img_bgr = cv2.cvtColor(view, cv2.COLOR_RGB2BGR)
-                # if self.render_mode == "human" and colab_rendering:
-                cv2_imshow(img_bgr)
-                pygame.time.wait(RenderConfig.frame_length)
-            else:
-                pygame.image.save(self.screen, "frame.png")
+            pygame.image.save(self.screen, "frame.png")
             return view
 
     def reset(self, seed=None, options=None):

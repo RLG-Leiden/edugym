@@ -13,18 +13,6 @@ import time
 import pygame
 import sys
 
-colab_rendering = "google.colab" in sys.modules
-
-if colab_rendering:
-    import cv2
-    from google.colab.patches import cv2_imshow
-    from google.colab import output
-    import os
-
-    # set SDL to use the dummy NULL video driver,
-    #   so it doesn't need a windowing system.
-    os.environ["SDL_VIDEODRIVER"] = "dummy"
-
 # Define colors
 white = (255, 255, 255)
 black = (0, 0, 0)
@@ -468,14 +456,6 @@ class SupermarketEnv(gym.Env):
 
             # Flip the display
             pygame.display.flip()
-
-            # convert image so it can be displayed in OpenCV
-            if colab_rendering:
-                output.clear()
-                view = pygame.surfarray.array3d(self.screen)
-                view = view.transpose([1, 0, 2])
-                img_bgr = cv2.cvtColor(view, cv2.COLOR_RGB2BGR)
-                cv2_imshow(img_bgr)
 
             # Wait for a short time to slow down the rendering
             pygame.time.wait(25)

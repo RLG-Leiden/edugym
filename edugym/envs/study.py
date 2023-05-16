@@ -189,14 +189,6 @@ class Study(gym.Env):
 
             pygame.display.update()
 
-            # convert image so it can be displayed in OpenCV
-            if colab_rendering:
-                output.clear()
-                view = pygame.surfarray.array3d(self.screen)
-                view = view.transpose([1, 0, 2])
-                img_bgr = cv2.cvtColor(view, cv2.COLOR_RGB2BGR)
-                cv2_imshow(img_bgr)
-
             pygame.time.wait(25)
 
         elif self.render_mode == None:

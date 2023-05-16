@@ -26,11 +26,6 @@ def is_notebook():
         return True
     except NameError:
         return False
-colab_rendering = "google.colab" in sys.modules    
-if colab_rendering or is_notebook():
-    # set SDL to use the dummy NULL video driver,
-    #   so it doesn't need a windowing system.
-    os.environ["SDL_VIDEODRIVER"] = "dummy"
 
 _ACTIONS = (-1, 0, 1)  # Left, no-op, right.
 ACTION_LEFT = -1

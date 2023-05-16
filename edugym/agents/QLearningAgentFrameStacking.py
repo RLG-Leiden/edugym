@@ -4,7 +4,7 @@ from gym import Env
 from collections import deque
 import plotly.graph_objects as go
 
-from edugym.envs.doortrails import DoortrailsEnv
+from edugym.envs.memorycorridor import MemoryCorridorEnv
 
 
 class QLearningAgent_Framestacking:
@@ -140,8 +140,8 @@ def test():
 
     results = []
     for rep in range(n_repetitions):
-        env = DoortrailsEnv(num_doors=3)
-        eval_env = DoortrailsEnv(num_doors=3)
+        env = MemoryCorridorEnv(num_doors=3)
+        eval_env = MemoryCorridorEnv(num_doors=3)
         Agent = QLearningAgent_Framestacking(env.observation_space.n, env.action_space.n, gamma, learning_rate, framestack_size=4)
         time_steps, returns = Agent.train(env, eval_env, epsilon, n_timesteps, eval_interval=50)
         results.append(returns)

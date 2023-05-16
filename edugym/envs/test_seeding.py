@@ -6,11 +6,13 @@ from golf import GolfEnv
 from memorycorridor import MemoryCorridorEnv
 from roadrunner import RoadrunnerEnv
 from supermarket import SupermarketEnv
+from study import Study
 import numpy as np
 
 class TestSeeding(unittest.TestCase):
   def test_seeding_works_uniformly(self):
     envs_to_test = [
+      (lambda: Study(), True, True),
       (lambda: SupermarketEnv(), True, False),
       (lambda: RoadrunnerEnv(), True, True),
       (lambda: MemoryCorridorEnv(), False, True),

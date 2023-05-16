@@ -514,7 +514,7 @@ def test():
         else:
             break
 
-        next_state, reward, done, info = env.step(action)
+        next_state, reward, done, truncated, info = env.step(action)
 
         # Render the environment
         env.render()
@@ -538,7 +538,7 @@ def test():
     for i in range(5):
         state_vector = env.state_to_vector(state)
         action = env.action_space.sample()  # sample a random action
-        next_state, reward, done, info = env.step(
+        next_state, reward, done, truncated, info = env.step(
             action
         )  # info is only there for compatibility with default Gym environments
         next_state_vector = env.state_to_vector(next_state)

@@ -154,3 +154,13 @@ class BoulderEnv(gym.Env):
         observation = self._get_obs()
 
         return observation, reward, terminated, truncated, {}
+
+def test():
+    render_mode = "graphic"  # 'inline'
+    # Initialize the environment
+    from edugym.envs.interactive import play_env
+    env = BoulderEnv(render_mode=render_mode)
+    play_env(env, "a=left, d=right", {"a":0, "d": 1})
+
+if __name__ == "__main__":
+    test()

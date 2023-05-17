@@ -204,7 +204,6 @@ class TamagotchiEnv(gym.Env):
         # Update the internal variables based on the chosen action - Joy, Energy, Food, Hygiene
         if action == 0: # play
             self.internal_vars += np.array([30, -5, -5, -5])
-
         elif action == 1: # sleep
             self.internal_vars += np.array([-5, 30, -5, -5])
             
@@ -341,3 +340,13 @@ class TamagotchiEnv(gym.Env):
             pygame.quit()
             self.pygame_initialized = False
         return
+
+def test():
+    render_mode = "graphic"  # 'inline'
+    # Initialize the environment
+    from edugym.envs.interactive import play_env
+    env = TamagotchiEnv(render_mode=render_mode)
+    play_env(env, "play=p, sleep=s, clean=c, feed=f", {"p": 0, "s": 1, "c": 2, "f":3})
+
+if __name__ == "__main__":
+    test()

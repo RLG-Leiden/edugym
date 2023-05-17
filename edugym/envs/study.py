@@ -9,7 +9,7 @@ import numpy as np
 import pygame
 
 class Study(gym.Env):
-    metadata = {"render_modes": ["terminal", "graphical", None]}
+    metadata = {"render_modes": ["terminal", "graphic", None]}
 
     def __init__(self, total_days: int = 10, n_actions: int = 5, lectures_days: int = 3, lectures_needed: int = 2, energy_needed: int = 1, seed: int = None, action_reward_noise_mean = 0.5, action_reward_noise_sigma = 0.05, render_mode = None):
         assert n_actions >= 3, "There must be at least the actions 'study', 'sleep', 'go_out'"
@@ -118,7 +118,7 @@ class Study(gym.Env):
                     print('*', end=' ')  # any other action was taken
             print()
 
-        elif self.render_mode == 'graphical':
+        elif self.render_mode == 'graphic':
             # Initialize pygame
             if not self.pygame_initialized:
                 pygame.init()
@@ -195,3 +195,13 @@ class Study(gym.Env):
           pass
         else:
             raise ValueError("render_mode {} not recognized".format(self.render_mode))
+
+def test():
+    render_mode = "graphic"  # 'inline'
+    # Initialize the environment
+    from edugym.envs.interactive import play_env
+    env = Study(render_mode=render_mode)
+    play_env(env, "s=study, z=sleep, g=go_out, o=other", {"s":2, "z": 0, "g": 1, "o":3})
+
+if __name__ == "__main__":
+    test()

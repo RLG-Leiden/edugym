@@ -157,8 +157,8 @@ def test():
 
     results = []
     for rep in range(n_repetitions):
-        env = TamagotchiEnv()
-        eval_env = TamagotchiEnv()
+        env = SupermarketEnv()
+        eval_env = SupermarketEnv()
 
         n_states = [obs.n for obs in env.observation_space]
         n_actions = env.action_space.n

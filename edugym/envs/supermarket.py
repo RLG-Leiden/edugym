@@ -476,45 +476,11 @@ def test():
     render_mode = "graphic"  # 'inline'
 
     # Initialize the environment
+    from edugym.envs.interactive import play_env
     env = SupermarketEnv(step_timeout=0.1, render_mode=render_mode)
-    state = env.reset()
+    play_env(env, "w=up, s=down, a=left, d=right", {"w":0, "s": 1, "a": 2, "d": 3})
 
-    # Take some random actions in the environment
-    env.render()
-
-    done = False
-    while not done:
-        action_input = input(
-            "Provide an action. w=up, s=down, a=left, d=right.\nAny other key will exit execution \n"
-        )
-        if action_input == "w":
-            action = 0
-        elif action_input == "s":
-            action = 1
-        elif action_input == "a":
-            action = 2
-        elif action_input == "d":
-            action = 3
-        else:
-            break
-
-        next_state, reward, done, truncated, info = env.step(action)
-
-        # Render the environment
-        env.render()
-
-        print(
-            f"State: {state}, Action: {action}, Next state {next_state}, Reward: {reward}, Done: {done}"
-        )
-
-        if done:
-            state = env.reset()
-        else:
-            state = next_state
-
-    # Close the environment
-    env.close()
-
+    env = SupermarketEnv(step_timeout=0.1, render_mode=render_mode, use_single_dim=True)
     # Difference between step(), descriptive_model() and generative_model()
     # Calling step
     print("Calling step(action) example \n")

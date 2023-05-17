@@ -10,7 +10,7 @@ MAX_SPEED = 10
 
 
 class RoadrunnerEnv(gym.Env):
-    metadata = {"render_modes": ["terminal", "pygame", "none"]}
+    metadata = {"render_modes": ["terminal", "graphic", "none"]}
 
     def __init__(self, render_mode="terminal", size=10, negative_reward_size=-100, max_episode_steps=100):
         self.size = size  # The size of the single dimension grid
@@ -35,7 +35,7 @@ class RoadrunnerEnv(gym.Env):
         assert render_mode is None or render_mode in self.metadata["render_modes"]
         self.render_mode = render_mode
 
-        if self.render_mode == "pygame":
+        if self.render_mode == "graphic":
             self.init_pygame()
         self.negative_reward_size = negative_reward_size
         self.max_episode_steps = max_episode_steps
@@ -109,7 +109,7 @@ class RoadrunnerEnv(gym.Env):
                 else:
                     print("= =", end=" ")
             print()
-        elif self.render_mode == "pygame":
+        elif self.render_mode == "graphic":
             self.screen.fill(BLACK)
             self.draw_grid()
             pygame.display.update()
@@ -191,3 +191,13 @@ class RoadrunnerEnv(gym.Env):
         self._render_frame()
 
         return observation, reward, terminated, truncated, info
+
+def test():
+    render_mode = "graphic"  # 'inline'
+    # Initialize the environment
+    from edugym.envs.interactive import play_env
+    env = RoadrunnerEnv(render_mode=render_mode)
+    play_env(env, "w=speed up, s=slow down, d= do nothing / idle", {"w":0, "s": 1, "d": 2})
+
+if __name__ == "__main__":
+    test()

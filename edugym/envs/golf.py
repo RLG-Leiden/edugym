@@ -309,3 +309,13 @@ class GolfCourse(RenderObject):
     def render_size(self):
         render_bounds = self.bounds[2:] + np.array([self.edge_size * 2] * 2)
         return render_bounds * self.render_scale
+
+def test():
+    render_mode = "graphic"  # 'inline'
+    # Initialize the environment
+    from edugym.envs.interactive import play_env
+    env = GolfEnv(render_mode=render_mode)
+    play_env(env, "p=put, c=Chip, d=drive", {"p":0, "c": 1, "d": 2})
+
+if __name__ == "__main__":
+    test()

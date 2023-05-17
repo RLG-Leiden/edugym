@@ -5,7 +5,7 @@ import pygame
 
 
 class MemoryCorridorEnv(gymnasium.Env):
-    metadata = {"render_modes": ["terminal", "pygame"]}
+    metadata = {"render_modes": ["terminal", "graphic"]}
 
     def __init__(self, render_mode=None, num_doors=3, verbose=0):
         self.num_doors = num_doors
@@ -111,7 +111,7 @@ class MemoryCorridorEnv(gymnasium.Env):
                         print(door_type + " " * (door_w - 2) + door_type, end="   ")
                 print()
             print()
-        elif self.render_mode == "pygame":
+        elif self.render_mode == "graphic":
             if not self.pygame_initialized:
                 # Define door dimensions
                 self.door_w = 100
@@ -200,14 +200,12 @@ class MemoryCorridorEnv(gymnasium.Env):
         return self._depth == len(self._correct_door_path)
 
 
-if __name__ == "__main__":
-    env = MemoryCorridorEnv(render_mode="terminal")
-    env.reset()
+def test():
+    render_mode = "graphic"  # 'inline'
+    # Initialize the environment
+    from edugym.envs.interactive import play_env
+    env = MemoryCorridorEnv(render_mode=render_mode)
+    play_env(env, "1=First Door, 2=Second Door, 3=Third Door", {"1":0, "2": 1, "3": 2})
 
-    # Play with user input
-    while True:
-        env.render()
-        action = int(input("Action: "))
-        env.step(action)
-        if env._terminated:
-            env.reset()
+if __name__ == "__main__":
+    test()

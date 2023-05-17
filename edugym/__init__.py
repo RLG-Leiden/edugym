@@ -1,10 +1,10 @@
 from gymnasium.envs.registration import register
 
-
 register(
     id="edugym/Boulder-v0",
     entry_point="edugym.envs:BoulderEnv"
 )
+
 register(
     id="edugym/Catch-v0",
     entry_point="edugym.envs:Catch"
@@ -49,4 +49,3 @@ register(
     id="edugym/TrashBotContinuous-v0",
     entry_point="edugym.envs:TrashBotContinuousEnv"
 )
-

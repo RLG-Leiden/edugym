@@ -45,6 +45,10 @@ red = (255, 0, 0)
 yellow = (255, 255, 0)
 green = (0, 255, 0)
 blue = (0, 0, 255)
+light_blue = (154, 187, 255)
+dark_grey = (110,110,110)
+ligth_grey = (235,235,235)
+dark_blue = (35, 110, 150)
 
 
 class Catch(gym.Env):
@@ -253,3 +257,13 @@ class Catch(gym.Env):
                         row += " "
                 print(row)
             print("\n")
+
+def test():
+    render_mode = "graphic"  # 'inline'
+    # Initialize the environment
+    from edugym.envs.interactive import play_env
+    env = Catch(render_mode=render_mode)
+    play_env(env, "s=stay, a=left, d=right", {"a":0, "s": 1, "d": 2})
+
+if __name__ == "__main__":
+    test()

@@ -398,6 +398,9 @@ class SupermarketEnv(gym.Env):
                 pygame.display.set_caption("Supermarket Environment")
                 self.pygame_initialized = True
 
+#            if colab_rendering:
+#                output.clear()
+
             # Set background color
             self.screen.fill(white)
 
@@ -411,45 +414,58 @@ class SupermarketEnv(gym.Env):
                         self.cell_size,
                     )
                     if render_grid[y][x] == 1:
-                        pygame.draw.rect(self.screen, black, rect)
+                        # Brick
+                        brick_color = [139, 79, 57]
+                        pygame.draw.rect(self.screen, brick_color, rect)
+                        pygame.draw.rect(self.screen, black, rect, 2)
+
                     elif render_grid[y][x] == 2:
-                        # triangle_corners = ((x* self.cell_size - 20, y* self.cell_size), (x* self.cell_size-10,y* self.cell_size-10), (x* self.cell_size+10, y* self.cell_size+10))
-                        # pygame.draw.polygon(self.screen, red, triangle_corners)
-                        rect = pygame.Rect(
-                            x * self.cell_size + 10,
-                            y * self.cell_size + 10,
-                            self.cell_size - 20,
-                            self.cell_size - 20,
-                        )
-                        pygame.draw.rect(self.screen, red, rect)
+                        # Apple
+                        green_apple = (75, 122, 71)
+                        pygame.draw.circle(self.screen, red, (x * self.cell_size + self.cell_size // 2, y * self.cell_size + self.cell_size // 2), self.cell_size // 4)
+                        pygame.draw.circle(self.screen, black, (x * self.cell_size + self.cell_size // 2, y * self.cell_size + self.cell_size // 2), self.cell_size // 4,2)
+                        pygame.draw.line(self.screen, green_apple, (x * self.cell_size + self.cell_size // 2, y * self.cell_size + self.cell_size // 3.75 ), (x * self.cell_size + self.cell_size // 1.3, y * self.cell_size + self.cell_size // 8), 5)
+
                     elif render_grid[y][x] == 3:
-                        rect = pygame.Rect(
-                            x * self.cell_size + 10,
-                            y * self.cell_size + 10,
-                            self.cell_size - 20,
-                            self.cell_size - 20,
-                        )
-                        pygame.draw.rect(self.screen, green, rect)
+                        # Beer can
+                        can_color = (200, 200, 40)
+                        can_top = (150,150,150)
+
+                        pygame.draw.ellipse(self.screen, can_color, (x * self.cell_size + 10 , y * self.cell_size + 40 , 30, 10))
+                        pygame.draw.ellipse(self.screen, black, (x * self.cell_size + 10 , y * self.cell_size + 40 , 30, 10),2)
+                        pygame.draw.rect(self.screen, can_color , (x * self.cell_size + 12 , y * self.cell_size + 10,28,35))
+                        pygame.draw.ellipse(self.screen, can_top , (x * self.cell_size + 10 , y * self.cell_size + 5 , 30, 10))
+                        pygame.draw.ellipse(self.screen, black , (x * self.cell_size + 10 , y * self.cell_size + 5 , 30, 10),2)
+                        pygame.draw.line(self.screen, black, (x * self.cell_size + 10 , y * self.cell_size + 10 ), (x * self.cell_size + 10 , y * self.cell_size + 43 ), 2)
+                        pygame.draw.line(self.screen, black, (x * self.cell_size + 39 , y * self.cell_size + 10 ), (x * self.cell_size + 39 , y * self.cell_size + 43 ), 2)
+                        mouth_pos = ((x + 0.5) * self.cell_size, (y + 0.5) * self.cell_size)
+
                     elif render_grid[y][x] == 4:
-                        rect = pygame.Rect(
-                            x * self.cell_size + 10,
-                            y * self.cell_size + 10,
-                            self.cell_size - 20,
-                            self.cell_size - 20,
-                        )
-                        pygame.draw.rect(self.screen, blue, rect)
+                        # Muffin
+                        pygame.draw.circle(self.screen, yellow, (x * self.cell_size + 25, y * self.cell_size + 25,), 20)
+                        pygame.draw.circle(self.screen, black, (x * self.cell_size + 25, y * self.cell_size + 25,), 20, 2)
+                        pygame.draw.rect(self.screen, white, ( x * self.cell_size + 5, y * self.cell_size + 25, 40,20))
+                        pygame.draw.line(self.screen, black, (x * self.cell_size + 5 , y * self.cell_size + 25 ), (x * self.cell_size + 45 , y * self.cell_size + 25 ), 2)
+                        pygame.draw.rect(self.screen, (240, 240, 240), ( x * self.cell_size + 10, y * self.cell_size + 25, 30,20))
+                        pygame.draw.rect(self.screen, black, ( x * self.cell_size + 10, y * self.cell_size + 25, 30,20), 2)
+
                     elif render_grid[y][x] == 5:
+                        # Exit
                         pygame.draw.rect(self.screen, grey, rect)
                         pygame.draw.lines(
                             self.screen,
                             black,
                             True,
                             (
-                                (x * self.cell_size + 25, y * self.cell_size + 25),
-                                (x * self.cell_size + 10, y * self.cell_size + 25),
+                                (x * self.cell_size + 25, y * self.cell_size),
+                                (x * self.cell_size + 25, y * self.cell_size + self.cell_size),
                             ),
-                            width=4,
+                            width=3,
                         )
+                        pygame.draw.rect(self.screen, (75, 122, 71), (x * self.cell_size , y * self.cell_size ,50,20))
+                        exit_text = pygame.font.Font(None, 25).render("Exit", True, (255, 255, 255))
+                        self.screen.blit(exit_text, (x * self.cell_size + 10 , y * self.cell_size + 3))
+
                     elif render_grid[y][x] == 6:
                         pygame.draw.circle(
                             self.screen,
@@ -458,12 +474,18 @@ class SupermarketEnv(gym.Env):
                             0.5 * (self.cell_size - 10),
                         )
 
+                        pygame.draw.ellipse(self.screen, (0, 0, 0), ((x + 0.5) * self.cell_size - 10, (y + 0.5) * self.cell_size - 10, 5, 5),3)
+                        pygame.draw.ellipse(self.screen, (0, 0, 0), ((x + 0.5) * self.cell_size + 6, (y + 0.5) * self.cell_size - 10, 5, 5),3)
+
+                        mouth_pos = ((x + 0.5) * self.cell_size, (y + 0.5) * self.cell_size)
+                        mouth_radius = 10
+                        pygame.draw.arc(self.screen, (0,0,0), pygame.Rect(mouth_pos[0]-mouth_radius, mouth_pos[1]-mouth_radius, 2*mouth_radius, 2*mouth_radius), 3.54, 5.88, 3)
+
+
             # Flip the display
             pygame.display.flip()
-
             # Wait for a short time to slow down the rendering
             pygame.time.wait(25)
-
     def close(self):
         if self.pygame_initialized:
             pygame.quit()

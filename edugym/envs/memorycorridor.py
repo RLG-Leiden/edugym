@@ -111,7 +111,7 @@ class MemoryCorridorEnv(gymnasium.Env):
                         print(door_type + " " * (door_w - 2) + door_type, end="   ")
                 print()
             print()
-        elif self.render_mode == "pygame":
+        elif self.render_mode == "graphic":
             # Define door dimensions
             door_width = 200
             door_height = 400

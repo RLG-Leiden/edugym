@@ -1,4 +1,5 @@
 import numpy as np
+import math
 
 import gymnasium as gym
 from gymnasium import spaces
@@ -6,11 +7,19 @@ from gymnasium import spaces
 import pygame
 
 # Define colors
+#grey = (128, 128, 128)
+brown = (150, 75, 0)
 white = (255, 255, 255)
-black = (0, 0, 128)
-grey = (128, 128, 128)
-red = (255, 0, 0)
-green = (128, 128, 0)
+black = (0, 0, 0)
+grey = (235,235,235)
+red = (156,39,6)
+yellow = (243, 188, 87)
+green = (0, 255, 0)
+blue = (35, 110, 150)
+light_blue = (154, 187, 255)
+dark_grey = (110,110,110)
+ligth_grey = (235,235,235)
+dark_blue = (35, 110, 150)
 
 class BoulderEnv(gym.Env):
     metadata = {"render_modes": ["terminal", "graphic"]}
@@ -87,7 +96,7 @@ class BoulderEnv(gym.Env):
                 pygame.display.set_caption("Bouldering")
                 self.pygame_initialized = True
             # Set background color
-            self.screen.fill(white)
+            self.screen.fill(brown)
             # Draw grid
             for y in range(self.height+1):
                 for x in range(self.n_grips):
@@ -98,29 +107,46 @@ class BoulderEnv(gym.Env):
                         20,
                     )
                     if y == 0 and self._agent_location == 0:
-                        pygame.draw.rect(self.screen, grey, rect)
+                        if x == 1:
+                            pygame.draw.circle(self.screen, yellow, center=(x * self.cell_size + self.cell_size*0.5, (self.height-y) * self.cell_size + self.cell_size * 0.5), radius=self.cell_size * 0.2)
+                            pygame.draw.circle(self.screen, black, center=(x * self.cell_size + self.cell_size*0.45, (self.height-y) * self.cell_size + self.cell_size * 0.4), radius=self.cell_size * 0.05)
+                            pygame.draw.circle(self.screen, black, center=(x * self.cell_size + self.cell_size*0.6, (self.height-y) * self.cell_size + self.cell_size * 0.4), radius=self.cell_size * 0.05)
+                            pygame.draw.arc(self.screen, black, pygame.Rect(x * self.cell_size + self.cell_size*0.4, (self.height-y) * self.cell_size + self.cell_size * 0.5, 10, 5), 3.54, 5.88, 2)
+                        else:
+                            pygame.draw.rect(self.screen, brown, rect)
                     else:
                         if wall[y][x] == 1: # grip
                             if y == self._agent_location:
-                                pygame.draw.circle(self.screen, black, center=(x * self.cell_size + self.cell_size*0.5, (self.height-y) * self.cell_size + self.cell_size * 0.5), radius=self.cell_size * 0.2)
+                                pygame.draw.circle(self.screen, yellow, center=(x * self.cell_size + self.cell_size*0.5, (self.height-y) * self.cell_size + self.cell_size * 0.5), radius=self.cell_size * 0.2)
+                                pygame.draw.circle(self.screen, black, center=(x * self.cell_size + self.cell_size*0.45, (self.height-y) * self.cell_size + self.cell_size * 0.4), radius=self.cell_size * 0.05)
+                                pygame.draw.circle(self.screen, black, center=(x * self.cell_size + self.cell_size*0.6, (self.height-y) * self.cell_size + self.cell_size * 0.4), radius=self.cell_size * 0.05)
+                                pygame.draw.arc(self.screen, black, pygame.Rect(x * self.cell_size + self.cell_size*0.4, (self.height-y) * self.cell_size + self.cell_size * 0.5, 10, 5), 3.54, 5.88, 2)
+                                self.draw_cobblestone((x * self.cell_size, (self.height-y) * self.cell_size), (25, 20))
                             else:
-                                pygame.draw.rect(self.screen, green, rect)
+                                #pygame.draw.rect(self.screen, grey, rect)
+                                self.draw_cobblestone((x * self.cell_size, (self.height-y) * self.cell_size), (25, 20))
                         elif wall[y][x] == 0:
-                            pygame.draw.rect(self.screen, red, rect)
+                            if y== 0:
+                                pygame.draw.rect(self.screen, brown, rect)
+                            else:
+                                self.draw_cobblestone((x * self.cell_size, (self.height-y) * self.cell_size+10), (22, 20), color=black)
+                                self.draw_crack((x * self.cell_size + self.cell_size*0.4, (self.height-y) * self.cell_size + self.cell_size * 0.5), 10, 0.6)
+                                self.draw_crack((x * self.cell_size + self.cell_size*0.4, (self.height-y) * self.cell_size + self.cell_size * 0.5), 10, -0.6)
 
             # Flip the display
             pygame.display.flip()
-
             # Wait for a short time to slow down the rendering
             pygame.time.wait(25)
 
 
-    def reset(self, seed=None, options=None):
+    def reset(self, seed=1, options=None):
+        # We need the following line to seed self.np_random
         super().reset(seed=seed)
+        np.random.seed(seed)
 
         # Initialize positions of grips
         self._agent_location = np.array([0], dtype=int)
-        self.grips = self.np_random.choice(self.n_grips, self.height)
+        self.grips = np.random.choice(self.n_grips, self.height)
         self.steps_taken = 0
 
         observation = self._get_obs()
@@ -155,6 +181,37 @@ class BoulderEnv(gym.Env):
 
         return observation, reward, terminated, truncated, {}
 
+    def draw_crack(self, position, height, angle):
+        crack_color = brown
+        # Define the tree parameters
+        scale_factor = 0.7
+        if height < 5:
+            return
+            
+          # Calculate the endpoint of the branch
+        endpoint_x = position[0] + height * math.sin(angle)
+        endpoint_y = position[1] - height * math.cos(angle)
+        endpoint = (int(endpoint_x), int(endpoint_y))
+            
+          # Draw the branch
+        pygame.draw.line(self.screen, crack_color, position, endpoint, 5)
+            
+          # Draw the left branch recursively
+        self.draw_crack(endpoint, height * scale_factor, angle - math.pi / 6)
+            
+          # Draw the right branch recursively
+        self.draw_crack(endpoint, height * scale_factor, angle + math.pi / 6) 
+
+    def draw_cobblestone(self, pos, size, color=(128, 128, 128)):
+        stone_width = size[0] // 2
+        stone_height = size[1] // 4
+        for row in range(2):
+            for col in range(4):
+                stone_pos = (pos[0] + col * stone_width, pos[1] + row * stone_height)
+                if (row + col) % 2 == 0:
+                    pygame.draw.rect(self.screen, color, (stone_pos[0], stone_pos[1], stone_width, stone_height))
+                else:
+                    pygame.draw.circle(self.screen, color, (stone_pos[0] + stone_width // 2, stone_pos[1] + stone_height // 2), stone_width // 2)
 def test():
     render_mode = "graphic"  # 'inline'
     # Initialize the environment

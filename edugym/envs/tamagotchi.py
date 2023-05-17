@@ -251,80 +251,111 @@ class TamagotchiEnv(gym.Env):
         elif mode == 'graphic':
           if not self.pygame_initialized:
               pygame.init()              
-              self.screen = pygame.display.set_mode((500, 800))
-              self.font = pygame.font.Font(None, 30)
+              self.screen = pygame.display.set_mode((700, 800))
+              self.font = pygame.font.SysFont('Raleway', 30)
+              self.font2 = pygame.font.SysFont('Raleway', 30, italic=True)
+              #self.font = pygame.font.Font(None, 30)
               self.clock = pygame.time.Clock()
               
               # Define button positions
-              self.play_button = pygame.Rect(140, 470, 75, 50)
-              self.sleep_button = pygame.Rect(290, 470, 75, 50)
-              self.feed_button = pygame.Rect(140, 570, 75, 50)
-              self.clean_button = pygame.Rect(290, 570, 75, 50)
+              self.play_button = pygame.Rect(150, 470, 100, 70)
+              self.sleep_button = pygame.Rect(460, 470, 100, 70)
+              self.feed_button = pygame.Rect(240, 550, 100, 70)
+              self.clean_button = pygame.Rect(370, 550, 100, 70)
               pygame.display.set_caption("Tamagotchi")
               self.pygame_initialized = True
 
           # Fill screen with white
           self.screen.fill((255, 255, 255))
-          
-          # Draw Tamagotchi
-          pygame.draw.ellipse(self.screen, (49, 149, 183), (50, 50, 400, 700))
-#          pygame.draw.ellipse(self.screen, (0, 0, 0), (50, 50, 400, 700), 4)
-          pygame.draw.rect(self.screen, (255, 255, 255), (100,200,300,200))
-#          pygame.draw.rect(self.screen, (0, 0, 0), (100,200,300,200), 4)
 
-          # Draw HP
-          pygame.draw.ellipse(self.screen, (220, 220, 160), (175, 225, 150, 150))
-#          pygame.draw.ellipse(self.screen, (0, 0, 0), (175, 225, 150, 150),5)
-          pygame.draw.ellipse(self.screen, (0, 0, 0), (215, 275, 15, 15),10)
-          pygame.draw.ellipse(self.screen, (0, 0, 0), (265, 275, 15, 15),10)
+          # Draw Tamagotchi background
+          tamagotchi_colour = (80, 140, 80)
+          black = (40,40,40)
+          pygame.draw.ellipse(self.screen, tamagotchi_colour, (325, 70, 50, 50),15)
+          pygame.draw.ellipse(self.screen, black, (325, 70, 50, 50),5)
+          pygame.draw.ellipse(self.screen, black, (340, 85, 20, 20),5)
 
+          pygame.draw.ellipse(self.screen, tamagotchi_colour, (200, 100, 300, 300))
+          pygame.draw.ellipse(self.screen, black, (200, 100, 300, 300),5)
+          pygame.draw.ellipse(self.screen, tamagotchi_colour, (100, 200, 500, 500))
+          pygame.draw.ellipse(self.screen, black, (100, 200, 500, 500),5)
+
+          vertices = [(220, 180), (122, 350), (400, 350), (400, 180) ]
+          pygame.draw.polygon(self.screen, tamagotchi_colour, vertices)
+          pygame.draw.line(self.screen, black, (220, 180), (122, 350), 5)
+
+          vertices = [(480, 180), (577, 350), (300, 350), (300, 180) ]
+          pygame.draw.polygon(self.screen, tamagotchi_colour, vertices)
+          pygame.draw.line(self.screen, black, (480, 180), (577, 350), 5)
+
+          # Side pieces
+          side_colour = (240,220,160)
+          vertices = [(200, 340), (200, 360), (122, 360), (131, 340) ]
+          pygame.draw.polygon(self.screen, side_colour, vertices)
+
+          vertices = [(500, 340), (500, 360), (577, 360), (567, 340)]
+          pygame.draw.polygon(self.screen, side_colour, vertices)
+
+          # Draw screen
+          pygame.draw.rect(self.screen, (255, 255, 255), (200,250,300,200))
+          pygame.draw.rect(self.screen, black, (200,250,300,200),2)
+
+          # Draw smiley
+          smiley_colour =  (243, 188, 87)
+          pygame.draw.ellipse(self.screen, smiley_colour, (275, 275, 150, 150))
+          # Eyes
+          pygame.draw.ellipse(self.screen, (0, 0, 0), (315, 325, 15, 15),10)
+          pygame.draw.ellipse(self.screen, (0, 0, 0), (365, 325, 15, 15),10)
+          # Mouth
           mouth_color = (0, 0, 0)
           if self.hp > 75: 
-            mouth_pos = (250, 310)
+            mouth_pos = (350, 360)
             mouth_radius = 40
             pygame.draw.arc(self.screen, mouth_color, pygame.Rect(mouth_pos[0]-mouth_radius, mouth_pos[1]-mouth_radius, 2*mouth_radius, 2*mouth_radius), 3.54, 5.88, 5)
           elif self.hp > 50: 
-            pygame.draw.line(self.screen, mouth_color, (220,330), (280,330), 5)
+            pygame.draw.line(self.screen, mouth_color, (320,380), (380,380), 5)
           else: 
-            mouth_pos = (250, 350)
+            mouth_pos = (350, 400)
             mouth_radius = 40
             pygame.draw.arc(self.screen, mouth_color, pygame.Rect(mouth_pos[0]-mouth_radius, mouth_pos[1]-mouth_radius, 2*mouth_radius, 2*mouth_radius), 0.4, 2.74, 5)
 
+          # HP text
           hp_text = self.font.render(f"HP: {self.hp}", True, (0, 0, 0))
-          self.screen.blit(hp_text, (110,210))
+          self.screen.blit(hp_text, (210,260))
           
+          # Utterance
           utterance_color = (50,50,50)
           utterance = [self.vocab[i] for i in self.tamagotchi_msg]
           utterance = '"' + ' '.join(utterance) + '"'
-          utterance_text = self.font.render(f"{utterance}", True, utterance_color)
-          self.screen.blit(utterance_text, (305,360))
+          utterance_text = self.font2.render(f"{utterance}", True, utterance_color)
+          self.screen.blit(utterance_text, (415,410))
           
-          #self.screen.blit(utterance_text, (365,360))     
-          #pygame.draw.ellipse(self.screen, utterance_color, (335, 320, 150, 100), 5)
-          #pygame.draw.line(self.screen, utterance_color, (280,340), (340,360), 5)
-
           # Draw buttons
-          pygame.draw.ellipse(self.screen, (255, 255, 255), self.play_button)
-          pygame.draw.ellipse(self.screen, (255, 255, 255), self.sleep_button)
-          pygame.draw.ellipse(self.screen, (255, 255, 255), self.feed_button)
-          pygame.draw.ellipse(self.screen, (255, 255, 255), self.clean_button)
-#          pygame.draw.ellipse(self.screen, (0, 0, 0), (150, 450, 75, 50),4)
-#          pygame.draw.ellipse(self.screen, (0, 0, 0), (300, 450, 75, 50),4)
-#          pygame.draw.ellipse(self.screen, (0, 0, 0), (150, 550, 75, 50),4)
-#          pygame.draw.ellipse(self.screen, (0, 0, 0), (300, 550, 75, 50),4)
+          grey = (235,235,235)
+          pygame.draw.ellipse(self.screen, grey, self.play_button)
+          #pygame.draw.ellipse(self.screen, black, self.play_button, 3)
+
+          pygame.draw.ellipse(self.screen, grey, self.sleep_button)
+          #pygame.draw.ellipse(self.screen, black, self.sleep_button, 3)
+
+          pygame.draw.ellipse(self.screen, grey, self.feed_button)
+          #pygame.draw.ellipse(self.screen, black, self.feed_button, 3)
+          
+          pygame.draw.ellipse(self.screen, grey, self.clean_button)
+          #pygame.draw.ellipse(self.screen, black, self.clean_button, 3)
 
           # Add text to buttons
           play_text = self.font.render("Play", True, (0, 0, 0))
-          self.screen.blit(play_text, (self.play_button.x + 15, self.play_button.y + 15))
+          self.screen.blit(play_text, (self.play_button.x + 25, self.play_button.y + 25))
           
           sleep_text = self.font.render("Sleep", True, (0, 0, 0))
-          self.screen.blit(sleep_text, (self.sleep_button.x + 10, self.sleep_button.y + 15))
+          self.screen.blit(sleep_text, (self.sleep_button.x + 20, self.sleep_button.y + 25))
           
           feed_text = self.font.render("Feed", True, (0, 0, 0))
-          self.screen.blit(feed_text, (self.feed_button.x + 15, self.feed_button.y + 15))
+          self.screen.blit(feed_text, (self.feed_button.x + 25, self.feed_button.y + 25))
           
           clean_text = self.font.render("Clean", True, (0, 0, 0))
-          self.screen.blit(clean_text, (self.clean_button.x + 10, self.clean_button.y + 15))
+          self.screen.blit(clean_text, (self.clean_button.x + 20, self.clean_button.y + 25))
           
           # Update display
           pygame.display.update()

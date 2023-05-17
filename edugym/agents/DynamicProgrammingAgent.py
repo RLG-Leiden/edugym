@@ -6,10 +6,8 @@ Edugym: Dynamic Programming Agent
 """
 
 import numpy as np
-import plotly.graph_objects as go
 
 from edugym.agents.Agent import Agent
-from edugym.envs.supermarket import SupermarketEnv
 
 
 class DynamicProgrammingAgent(Agent):
@@ -111,9 +109,9 @@ class DynamicProgrammingAgent(Agent):
             R_ep = 0
             for t in range(max_horizon):
                 a = self.select_action(s, epsilon)
-                s_prime, r, done, _ = eval_env.step(a)
+                s_prime, r, done, truncated, _ = eval_env.step(a)
                 R_ep += r
-                if done:
+                if done or truncated:
                     break
                 else:
                     s = s_prime
@@ -126,22 +124,24 @@ class DynamicProgrammingAgent(Agent):
 def test():
     """ Notebook experiments with Dynamic Programming """
 
+    from edugym.envs.supermarket import SupermarketEnv
     # 1. DP with perfect model
     step_timeout = 0.0
     gamma = 1.0
     threshold = 0.01
 
-    env = SupermarketEnv(step_timeout=step_timeout)
+    env = SupermarketEnv(step_timeout=step_timeout, use_single_dim=True)
     DPAgent = DynamicProgrammingAgent(
         env.observation_space.n, env.action_space.n, gamma
     )
     DPAgent.train(env.descriptive_model, threshold)
 
     done = False
+    truncated = False
     s = env.reset()
-    while not done:
+    while not done and not truncated:
         a = DPAgent.select_action(s)
-        s_next, r, done, _ = env.step(a)
+        s_next, r, done, truncated,  _ = env.step(a)
         env.render()
         s = s_next
     env.close()
@@ -153,7 +153,7 @@ def test():
     performances = np.empty([len(noise_levels), n_repetitions])
     for i, noise in enumerate(noise_levels):
         for j in range(n_repetitions):
-            env = SupermarketEnv(step_timeout=0.0, noise=noise)
+            env = SupermarketEnv(step_timeout=0.0, noise=noise, use_single_dim=True)
             DPAgent = DynamicProgrammingAgent(
                 env.observation_space.n, env.action_space.n, gamma
             )
@@ -165,6 +165,7 @@ def test():
     mean_performance = np.mean(performances, axis=1)
 
     # Plot results
+    import plotly.graph_objects as go
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=noise_levels, y=np.array(mean_performance)))
     fig.update_layout(

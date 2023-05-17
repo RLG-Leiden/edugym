@@ -18,19 +18,6 @@
 import gymnasium as gym
 import numpy as np
 import pygame
-import sys
-import os
-def is_notebook():
-    try:
-        get_ipython
-        return True
-    except NameError:
-        return False
-colab_rendering = "google.colab" in sys.modules    
-if colab_rendering or is_notebook():
-    # set SDL to use the dummy NULL video driver,
-    #   so it doesn't need a windowing system.
-    os.environ["SDL_VIDEODRIVER"] = "dummy"
 
 _ACTIONS = (-1, 0, 1)  # Left, no-op, right.
 ACTION_LEFT = -1
@@ -58,6 +45,10 @@ red = (255, 0, 0)
 yellow = (255, 255, 0)
 green = (0, 255, 0)
 blue = (0, 0, 255)
+light_blue = (154, 187, 255)
+dark_grey = (110,110,110)
+ligth_grey = (235,235,235)
+dark_blue = (35, 110, 150)
 
 
 class Catch(gym.Env):
@@ -202,50 +193,55 @@ class Catch(gym.Env):
             if not self.pygame_initialized:
                 pygame.init()
                 self.cell_size = 50
-                screen_width, screen_height = (
+                self.screen_width, self.screen_height = (
                     self.width * self.cell_size,
                     (self.height) * self.cell_size,
                 )
-                self.screen = pygame.display.set_mode([screen_width, screen_height])
+                self.screen = pygame.display.set_mode([self.screen_width, self.screen_height])
                 pygame.display.set_caption("Catch Environment")
                 self.pygame_initialized = True
 
             # Set background color
-            self.screen.fill(black)
+            self.screen.fill(dark_blue)
             grid_width = 5
             # Draw white bg
-            pygame.draw.rect(self.screen, white, pygame.Rect(
+            pygame.draw.rect(self.screen, ligth_grey, pygame.Rect(
                 grid_width,
                 grid_width,
-                screen_width - 10,
-                screen_height - 10,
+                self.screen_width - 10,
+                self.screen_height - 10,
             ))
-
 
             # Draw Ball
-            pygame.draw.rect(self.screen, yellow, pygame.Rect(
-                (self._ball_x * self.cell_size) + grid_width,
-                (max(0, (self._ball_y)) * self.cell_size) + grid_width,
-                self.cell_size - grid_width*2,
-                self.cell_size - grid_width*2,
-            ))
+            light_yellow = (243, 188, 87)
+            ball_radius = ((self.cell_size - grid_width*4) // 2)
+            pygame.draw.circle(self.screen, light_yellow,(
+                (self._ball_x * self.cell_size) + grid_width*2 + ball_radius,
+                (max(0, (self._ball_y)) * self.cell_size) + grid_width*3 + ball_radius),
+                ball_radius,
+            )
             # Draw Paddle
-            pygame.draw.rect(self.screen, green, pygame.Rect(
-                (self._paddle_x * self.cell_size) + grid_width,
-                ((self._paddle_y) * self.cell_size + (self.cell_size/2)) + grid_width,
-                self.cell_size  - grid_width*2,
-                (self.cell_size / 2) - grid_width*2,
-            ))
+            paddle_color = (156,39,6)
+            x_pos = (self._paddle_x * self.cell_size) + grid_width
+            y_pos = ((self._paddle_y) * self.cell_size + (self.cell_size/2)) + grid_width
+            width = self.cell_size  - grid_width*2
+            height = (self.cell_size / 2) - grid_width*2
+            pygame.draw.polygon(self.screen, paddle_color, [
+                (x_pos, y_pos),
+                (x_pos + width/10, y_pos),
+                (x_pos + width/10, y_pos + (height - (height / 10))),
+                (x_pos + (width -  width/10), y_pos + (height - (height / 10))),
+                (x_pos + (width -  width/10), y_pos),
+                (x_pos + width, y_pos),
+                (x_pos + width, y_pos + height),
+                (x_pos, y_pos + height),
+                (x_pos, y_pos),
+            ], 5)
             
             # Flip the display
             pygame.display.flip()
-            if is_notebook():
-                from IPython.display import Image, display
-                pygame.image.save(self.screen, 'frame.png')
-                display(Image(filename='frame.png'))
-            else:
-                # Wait for a short time to slow down the rendering
-                pygame.time.wait(25)
+            # Wait for a short time to slow down the rendering
+            pygame.time.wait(25)
         else:
             render_grid = self._observation()
             print("\n")
@@ -262,96 +258,12 @@ class Catch(gym.Env):
                 print(row)
             print("\n")
 
+def test():
+    render_mode = "graphic"  # 'inline'
+    # Initialize the environment
+    from edugym.envs.interactive import play_env
+    env = Catch(render_mode=render_mode)
+    play_env(env, "s=stay, a=left, d=right", {"a":0, "s": 1, "d": 2})
 
-gym.register(
-    id="Catch-v0",
-    entry_point="catch:Catch",
-    kwargs={},
-)
-
-gym.register(
-    id="Catch-vectorized-v0",
-    entry_point="catch:Catch",
-    kwargs={"observation_type": OBSERVATION_TYPE_MINIMAL},
-)
-
-gym.register(
-    id="Catch-color-v0",
-    entry_point="catch:Catch",
-    kwargs={"observation_type": OBSERVATION_TYPE_DEFAULT_WITH_COLORS},
-)
-
-gym.register(
-    id="Catch-onehot-v0",
-    entry_point="catch:Catch",
-    kwargs={"observation_type": OBSERVATION_TYPE_DEFAULT_ONEHOT},
-)
-
-for size in range(2, 9):
-    gym.register(
-        id=f"Catch-{size}-v0",
-        entry_point="catch:Catch",
-        kwargs={"rows": 10 * size, "columns": 5 * size},
-    )
-    gym.register(
-        id=f"Catch-{size}-vectorized-v0",
-        entry_point="catch:Catch",
-        kwargs={
-            "observation_type": OBSERVATION_TYPE_MINIMAL,
-            "rows": 10 * size,
-            "columns": 5 * size,
-        },
-    )
-    gym.register(
-        id=f"Catch-{size}-color-v0",
-        entry_point="catch:Catch",
-        kwargs={
-            "observation_type": OBSERVATION_TYPE_DEFAULT_WITH_COLORS,
-            "rows": 10 * size,
-            "columns": 5 * size,
-        },
-    )
-    gym.register(
-        id=f"Catch-{size}-onehot-v0",
-        entry_point="catch:Catch",
-        kwargs={
-            "observation_type": OBSERVATION_TYPE_DEFAULT_ONEHOT,
-            "rows": 10 * size,
-            "columns": 5 * size,
-        },
-    )
-
-
-for size in range(2, 21):
-    gym.register(
-        id=f"Catch-{size}x{size}-v0",
-        entry_point="catch:Catch",
-        kwargs={"rows": size, "columns": size},
-    )
-    gym.register(
-        id=f"Catch-{size}x{size}-vectorized-v0",
-        entry_point="catch:Catch",
-        kwargs={
-            "observation_type": OBSERVATION_TYPE_MINIMAL,
-            "rows": size,
-            "columns": size,
-        },
-    )
-    gym.register(
-        id=f"Catch-{size}x{size}-color-v0",
-        entry_point="catch:Catch",
-        kwargs={
-            "observation_type": OBSERVATION_TYPE_DEFAULT_WITH_COLORS,
-            "rows": size,
-            "columns": size,
-        },
-    )
-    gym.register(
-        id=f"Catch-{size}x{size}-onehot-v0",
-        entry_point="catch:Catch",
-        kwargs={
-            "observation_type": OBSERVATION_TYPE_DEFAULT_ONEHOT,
-            "rows": size,
-            "columns": size,
-        },
-    )
+if __name__ == "__main__":
+    test()

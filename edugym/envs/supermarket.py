@@ -13,18 +13,6 @@ import time
 import pygame
 import sys
 
-colab_rendering = "google.colab" in sys.modules
-
-if colab_rendering:
-    import cv2
-    from google.colab.patches import cv2_imshow
-    from google.colab import output
-    import os
-
-    # set SDL to use the dummy NULL video driver,
-    #   so it doesn't need a windowing system.
-    os.environ["SDL_VIDEODRIVER"] = "dummy"
-
 # Define colors
 white = (255, 255, 255)
 black = (0, 0, 0)
@@ -38,7 +26,7 @@ blue = (0, 0, 255)
 class SupermarketEnv(gym.Env):
     metadata = {"render.modes": ["inline", "graphic"]}
 
-    def __init__(self, step_timeout=0.0, noise=0.0, render_mode="graphic"):
+    def __init__(self, step_timeout=0.0, noise=0.0, render_mode="graphic", use_single_dim=False):
 
         """
         Initialize the Supermarket environment.
@@ -66,8 +54,11 @@ class SupermarketEnv(gym.Env):
         # Observation space: (x,y) location and whether we picked up each of the three items
         self.state_dims = [self.width, self.height, 2, 2, 2]
         self.n_states = np.prod(self.state_dims)
-        self.observation_space = spaces.Discrete(self.n_states)
-        # self.observation_space = spaces.MultiDiscrete(self.state_dims)
+        self.use_single_dim = use_single_dim
+        if use_single_dim:
+            self.observation_space = spaces.Discrete(self.n_states)
+        else:
+            self.observation_space = spaces.MultiDiscrete(self.state_dims)
 
         # Action space: up, down, left, right
         self.n_actions = 4
@@ -235,8 +226,8 @@ class SupermarketEnv(gym.Env):
         )  # start in (0,1) with none of the three items collected
         self.done = False
         self.state = self.vector_to_state(vector_state)
-        return self.state
-
+        obs = self.state if self.use_single_dim else np.array(self.state_to_vector(self.state))
+        return obs
     def can_call_step(self):
         """
         Checks whether enough time has passed for a new call to step() (without actually calling step()).  
@@ -343,7 +334,8 @@ class SupermarketEnv(gym.Env):
         self.state = next_state
         self.done = done
         info = {}
-        return next_state, reward, done, False, info
+        obs = next_state if self.use_single_dim else np.array(self.state_to_vector(next_state))
+        return obs, reward, done, False, info
 
     def render(self):
         """
@@ -469,14 +461,6 @@ class SupermarketEnv(gym.Env):
             # Flip the display
             pygame.display.flip()
 
-            # convert image so it can be displayed in OpenCV
-            if colab_rendering:
-                output.clear()
-                view = pygame.surfarray.array3d(self.screen)
-                view = view.transpose([1, 0, 2])
-                img_bgr = cv2.cvtColor(view, cv2.COLOR_RGB2BGR)
-                cv2_imshow(img_bgr)
-
             # Wait for a short time to slow down the rendering
             pygame.time.wait(25)
 
@@ -492,45 +476,11 @@ def test():
     render_mode = "graphic"  # 'inline'
 
     # Initialize the environment
+    from edugym.envs.interactive import play_env
     env = SupermarketEnv(step_timeout=0.1, render_mode=render_mode)
-    state = env.reset()
+    play_env(env, "w=up, s=down, a=left, d=right", {"w":0, "s": 1, "a": 2, "d": 3})
 
-    # Take some random actions in the environment
-    env.render()
-
-    done = False
-    while not done:
-        action_input = input(
-            "Provide an action. w=up, s=down, a=left, d=right.\nAny other key will exit execution \n"
-        )
-        if action_input == "w":
-            action = 0
-        elif action_input == "s":
-            action = 1
-        elif action_input == "a":
-            action = 2
-        elif action_input == "d":
-            action = 3
-        else:
-            break
-
-        next_state, reward, done, info = env.step(action)
-
-        # Render the environment
-        env.render()
-
-        print(
-            f"State: {state}, Action: {action}, Next state {next_state}, Reward: {reward}, Done: {done}"
-        )
-
-        if done:
-            state = env.reset()
-        else:
-            state = next_state
-
-    # Close the environment
-    env.close()
-
+    env = SupermarketEnv(step_timeout=0.1, render_mode=render_mode, use_single_dim=True)
     # Difference between step(), descriptive_model() and generative_model()
     # Calling step
     print("Calling step(action) example \n")
@@ -538,7 +488,7 @@ def test():
     for i in range(5):
         state_vector = env.state_to_vector(state)
         action = env.action_space.sample()  # sample a random action
-        next_state, reward, done, info = env.step(
+        next_state, reward, done, truncated, info = env.step(
             action
         )  # info is only there for compatibility with default Gym environments
         next_state_vector = env.state_to_vector(next_state)

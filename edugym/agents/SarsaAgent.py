@@ -6,10 +6,8 @@ Edugym: SARSA Agent
 """
 
 import numpy as np
-import plotly.graph_objects as go
 
 from edugym.agents.Agent import Agent
-from edugym.envs.supermarket import SupermarketEnv
 
 
 class SarsaAgent(Agent):
@@ -98,7 +96,7 @@ class SarsaAgent(Agent):
 
         for t in range(n_timesteps):
             # transition and take next action
-            s_next, r, done, _ = env.step(a)
+            s_next, r, done, truncated, _ = env.step(a)
             a_next = self.select_action(s_next, epsilon)
 
             # update Q table
@@ -111,7 +109,7 @@ class SarsaAgent(Agent):
                 mean_eval_returns.append(mean_eval_return)
 
             # Set next state
-            if done:
+            if done or truncated:
                 s = env.reset()
                 a = self.select_action(s, epsilon)
             else:
@@ -136,9 +134,9 @@ class SarsaAgent(Agent):
             R_ep = 0
             for t in range(max_horizon):
                 a = self.select_action(s, epsilon)
-                s_prime, r, done, _ = eval_env.step(a)
+                s_prime, r, done, truncated,_ = eval_env.step(a)
                 R_ep += r
-                if done:
+                if done or truncated:
                     break
                 else:
                     s = s_prime
@@ -150,6 +148,7 @@ class SarsaAgent(Agent):
 
 def test():
     """ Basic SARSA experiment """
+    from edugym.envs.supermarket import SupermarketEnv
 
     learning_rate = 0.1
     gamma = 1.0
@@ -160,8 +159,8 @@ def test():
 
     results = []
     for rep in range(n_repetitions):
-        env = SupermarketEnv()
-        eval_env = SupermarketEnv(step_timeout=0.0)
+        env = SupermarketEnv(use_single_dim=True)
+        eval_env = SupermarketEnv(step_timeout=0.0, use_single_dim=True)
         Agent = SarsaAgent(
             env.observation_space.n, env.action_space.n, gamma, learning_rate
         )
@@ -171,6 +170,7 @@ def test():
     average_learning_curve = np.mean(np.array(results), axis=0)
 
     # Generate figure
+    import plotly.graph_objects as go
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=time_steps, y=average_learning_curve, name="SARSA"))
 

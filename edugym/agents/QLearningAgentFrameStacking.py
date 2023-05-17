@@ -1,10 +1,7 @@
 import numpy as np
 import random
-from gym import Env
+from gymnasium import Env
 from collections import deque
-import plotly.graph_objects as go
-
-from edugym.envs.memorycorridor import MemoryCorridorEnv
 
 
 class QLearningAgent_Framestacking:
@@ -78,7 +75,7 @@ class QLearningAgent_Framestacking:
         for t in range(n_timesteps):
             # take action in environment
             a = self.select_action(s, epsilon)
-            s_next, r, done, _, _ = env.step(a)
+            s_next, r, done, truncated, _ = env.step(a)
 
             # update Q table
             self.update(s, a, s_next, r)
@@ -90,7 +87,7 @@ class QLearningAgent_Framestacking:
                 mean_eval_returns.append(mean_eval_return)
 
             # Set next state
-            if done:
+            if done or truncated:
                 s, _ = env.reset()
                 self.reset_observations()
             else:
@@ -116,9 +113,9 @@ class QLearningAgent_Framestacking:
             done = False
             while True:
                 a = self.select_action(s, epsilon)
-                s_prime, r, done, _, _ = eval_env.step(a)
+                s_prime, r, done, truncated, _ = eval_env.step(a)
                 R_ep += r
-                if done:
+                if done or truncated:
                     break
                 else:
                     s = s_prime
@@ -131,6 +128,8 @@ class QLearningAgent_Framestacking:
 def test():
     """Basic Q-learning experiment"""
 
+
+    from edugym.envs.memorycorridor import MemoryCorridorEnv
     learning_rate = 0.1
     gamma = 0.99
     epsilon = 0.1
@@ -149,6 +148,7 @@ def test():
     average_learning_curve = np.mean(np.array(results), axis=0)
 
     # Generate figure
+    import plotly.graph_objects as go
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=time_steps, y=average_learning_curve, name="Q-learning with framestacking"))
 

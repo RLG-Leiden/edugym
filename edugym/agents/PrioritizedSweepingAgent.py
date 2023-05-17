@@ -7,10 +7,8 @@ Edugym: Prioritized Sweeping Agent
 
 import numpy as np
 from queue import PriorityQueue
-import plotly.graph_objects as go
 
 from edugym.agents.Agent import Agent
-from edugym.envs.supermarket import SupermarketEnv
 
 
 class PrioritizedSweepingAgent(Agent):
@@ -148,7 +146,7 @@ class PrioritizedSweepingAgent(Agent):
         for t in range(n_timesteps):
             # take action in environment
             a = self.select_action(s, epsilon)
-            s_next, r, done, _ = env.step(a)
+            s_next, r, done, truncated, _ = env.step(a)
 
             # update Q table & model
             self.update(s, a, s_next, r, update_model=True)
@@ -171,7 +169,7 @@ class PrioritizedSweepingAgent(Agent):
                 mean_eval_returns.append(mean_eval_return)
 
             # Set next state
-            if done:
+            if done or truncated:
                 s = env.reset()
             else:
                 s = s_next
@@ -194,9 +192,9 @@ class PrioritizedSweepingAgent(Agent):
             R_ep = 0
             for t in range(max_horizon):
                 a = self.select_action(s, epsilon)
-                s_prime, r, done, _ = eval_env.step(a)
+                s_prime, r, done, truncated, _ = eval_env.step(a)
                 R_ep += r
-                if done:
+                if done or truncated:
                     break
                 else:
                     s = s_prime
@@ -209,6 +207,7 @@ class PrioritizedSweepingAgent(Agent):
 def test():
     """ Notebook experiments with Prioritized Sweeping """
 
+    from edugym.envs.supermarket import SupermarketEnv
     learning_rate = 0.1
     gamma = 1.0
     epsilon = 0.1
@@ -223,8 +222,8 @@ def test():
     for planning_budget in planning_budget_seconds:
         results = []
         for rep in range(n_repetitions):
-            env = SupermarketEnv(step_timeout=planning_budget)
-            eval_env = SupermarketEnv(step_timeout=0.0)
+            env = SupermarketEnv(step_timeout=planning_budget, use_single_dim=True)
+            eval_env = SupermarketEnv(step_timeout=0.0, use_single_dim=True)
             Agent = PrioritizedSweepingAgent(
                 env.observation_space.n,
                 env.action_space.n,
@@ -239,6 +238,7 @@ def test():
         print("Completed planning budget: {}".format(planning_budget))
 
     # Generate figure
+    import plotly.graph_objects as go
     fig = go.Figure()
     for i, planning_budget in enumerate(planning_budget_seconds):
         name = (

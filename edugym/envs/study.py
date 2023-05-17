@@ -122,14 +122,14 @@ class Study(gym.Env):
             # Initialize pygame
             if not self.pygame_initialized:
                 pygame.init()
-                screen_width = (len(self.rendergrid[0])+1) * self.cell_width
-                screen_height = len(self.rendergrid) * self.cell_height
+                screen_width = 6 * self.cell_width
+                screen_height = (int(self.total_days/5.1)+1 ) * 2 * self.cell_height
                 self.screen = pygame.display.set_mode([screen_width, screen_height])
                 pygame.display.set_caption("Study Environment")
                 self.font = pygame.font.SysFont(None, 24)
-                self.img_lecture = self.font.render('Lecture', True, (230, 170, 104))
-                self.img_other = self.font.render('Free', True, (127, 176, 105))
-                self.img_exam = self.font.render('Exam', True, (202, 60, 37))
+                self.img_lecture = self.font.render('Lecture', True, (100, 100, 100))
+                self.img_other = self.font.render('Free', True, (100, 100, 100))
+                self.img_exam = self.font.render('Exam', True, (100, 100, 100))
                 self.imgs_days = [self.font.render(day, True, (0, 0, 0)) for day in ['Mo', 'Tu', 'We', 'Th', 'Fr']]
 
                 self.pygame_initialized = True
@@ -148,38 +148,39 @@ class Study(gym.Env):
 
             for row in range(len(self.rendergrid)):
                 for col in range(len(self.rendergrid[0])):
+                    render_row_counter = int(col/5) 
                     if row == 0:
                         self.screen.blit(self.imgs_days[col%5],
-                                             ((col+1) * self.cell_width + self.cell_width / 2, 3*self.cell_height / 8))
+                                             ((col%5) *  self.cell_width  + 3* self.cell_width / 2,2* render_row_counter*self.cell_height + 3*self.cell_height / 8))
                         if self.rendergrid[row][col] == 1:
                             self.screen.blit(self.img_lecture,
-                                             ((col+1) * self.cell_width + self.cell_width / 2, 6*self.cell_height / 8))
+                                             ((col%5) *  self.cell_width  + 3* self.cell_width / 2,2* render_row_counter*self.cell_height + 6*self.cell_height / 8))
                         elif col == len(self.rendergrid[0]) - 1:
                             self.screen.blit(self.img_exam,
-                                             ((col+1) * self.cell_width + self.cell_width / 2, 6*self.cell_height / 8))
+                                             ((col%5) *  self.cell_width  + 3* self.cell_width / 2,2* render_row_counter*self.cell_height + 6*self.cell_height / 8))
                         else:
                             self.screen.blit(self.img_other,
-                                             ((col+1) * self.cell_width + self.cell_width / 2, 6*self.cell_height / 8))
+                                             ((col%5) *  self.cell_width  + 3* self.cell_width / 2,2* render_row_counter*self.cell_height + 6*self.cell_height / 8))
 
                     elif row == 1:
                         if col < self.current_day:
                             if self.rendergrid[0][col] == 1 and self.action_history[col] == 2:  # studied at the right moment
-                                curr_img = self.font.render('Study', True, (25, 215, 25))
+                                curr_img = self.font.render('Study', True, (127, 176, 105))
                             elif self.rendergrid[0][col] != 1 and self.action_history[col] == 2:  # studied at the wrong moment
-                                curr_img = self.font.render('Study', True, (215, 25, 25))
+                                curr_img = self.font.render('Study', True, (230, 170, 104))
                             elif self.action_history[col] == 0:  # sleeping
-                                curr_img = self.font.render('ZzZ', True, (125, 200, 0))
+                                curr_img = self.font.render('ZzZ', True, (127, 176, 105))
                             elif self.action_history[col] == 1:  # going out
-                                curr_img = self.font.render('Go Out', True, (200, 125, 0))
+                                curr_img = self.font.render('Go Out', True, (202, 60, 37))
                             else:
-                                curr_img = self.font.render('*', True, (125, 125, 125))
+                                curr_img = self.font.render('Other', True, (230, 170, 104))
                             self.screen.blit(curr_img,
-                                             ((col+1) * self.cell_width + self.cell_width / 2,
-                                              self.cell_height + self.cell_height / 4))
+                                             ((col%5+1) * self.cell_width + self.cell_width / 2,
+                                              2*render_row_counter*self.cell_height + self.cell_height / 4 + self.cell_height))
                         if col == self.current_day:
                           # Plot agent
-                          agent_x = (col+1) * self.cell_width + self.cell_width / 2
-                          agent_y = self.cell_height + self.cell_height / 4 - 10
+                          agent_x = (col%5+1) * self.cell_width + self.cell_width / 2
+                          agent_y = 2*render_row_counter*self.cell_height + self.cell_height / 4 + self.cell_height - 10
                           mouth_pos = (agent_x+18, agent_y + 18)
                           mouth_radius = 10
                           pygame.draw.ellipse(self.screen, (220, 220, 160), (agent_x, agent_y , 35, 35))
@@ -190,7 +191,6 @@ class Study(gym.Env):
             pygame.display.update()
 
             pygame.time.wait(25)
-
         elif self.render_mode == None:
           pass
         else:

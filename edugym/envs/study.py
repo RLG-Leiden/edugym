@@ -1,5 +1,7 @@
 from __future__ import annotations
 import sys
+
+import random
 from typing import SupportsFloat, Any, Dict
 
 import gymnasium as gym
@@ -7,9 +9,8 @@ from gymnasium.core import ActType, ObsType, RenderFrame
 from gymnasium.spaces import Discrete, MultiDiscrete
 import numpy as np
 import pygame
-
 class Study(gym.Env):
-    metadata = {"render_modes": ["terminal", "graphic", None]}
+    metadata = {"render_modes": ["human", "graphic", None]}
 
     def __init__(self, total_days: int = 10, n_actions: int = 5, lectures_days: int = 3, lectures_needed: int = 2, energy_needed: int = 1, seed: int = None, action_reward_noise_mean = 0.5, action_reward_noise_sigma = 0.05, render_mode = None):
         assert n_actions >= 3, "There must be at least the actions 'study', 'sleep', 'go_out'"
@@ -23,6 +24,8 @@ class Study(gym.Env):
         self.lectures_needed = lectures_needed
         self.energy_needed = energy_needed
 
+        if seed is not None: 
+          np.random.seed(seed)
 
         # determine which of the days have a lecture, randomly initilized
         lectures = np.random.choice(total_days-1, lectures_days, replace=False)
@@ -40,17 +43,18 @@ class Study(gym.Env):
 
         # set the means and noise levels for each action
         #                             sleep, go out, study 
-        base_action_rewards = np.array([-0.5, 0.5, -0.5,])
-        if self.action_space.n > 3: 
-          self.action_rewards = np.append(base_action_rewards,np.random.uniform(-action_reward_noise_mean,action_reward_noise_mean,self.action_space.n-3))
-        else: 
-          self.action_rewards = base_action_rewards
+        # base_action_rewards = np.array([-0.5, 0.0, -0.5,])
+        # if self.action_space.n > 3: 
+        #   self.action_rewards = np.append(base_action_rewards,np.random.uniform(-action_reward_noise_mean,0,self.action_space.n-3))
+        # else: 
+        #   self.action_rewards = base_action_rewards
+        self.action_rewards = np.random.uniform(-action_reward_noise_mean, 0, self.action_space.n)
         
         # Setup rendering
         assert render_mode is None or render_mode in self.metadata["render_modes"]
         self.render_mode = render_mode        
         self.pygame_initialized = False
-        self.cell_width = int(60 * 21 / total_days)
+        self.cell_width = 200
         self.cell_height = 60
         self.rendergrid = [self.lecture_days]
         self.rendergrid.append([0 for _ in range(len(self.lecture_days))])
@@ -84,7 +88,7 @@ class Study(gym.Env):
         if action == 2 and self.current_day == self.total_days - 1 and self.knowledge >= self.lectures_needed and self.energy > self.energy_needed:
           reward = 10
         else: 
-          reward = self.np_random.normal(self.action_rewards[action], self.action_reward_noise_sigma)
+          reward = np.random.normal(self.action_rewards[action], self.action_reward_noise_sigma)
 
         # termination
         terminated = False
@@ -97,7 +101,7 @@ class Study(gym.Env):
         return np.array([self.knowledge, self.energy, self.current_day]), reward, terminated, False, {}
 
     def render(self) -> RenderFrame | list[RenderFrame] | None:
-        if self.render_mode == "terminal":
+        if self.render_mode == "human":
             for i in range(self.total_days):  # print lecture schedule
                 if self.lecture_days[i] == 1:
                     print('L', end=' ')  # lecture
@@ -183,7 +187,8 @@ class Study(gym.Env):
                           agent_y = 2*render_row_counter*self.cell_height + self.cell_height / 4 + self.cell_height - 10
                           mouth_pos = (agent_x+18, agent_y + 18)
                           mouth_radius = 10
-                          pygame.draw.ellipse(self.screen, (220, 220, 160), (agent_x, agent_y , 35, 35))
+                          #pygame.draw.ellipse(self.screen, (220, 220, 160), (agent_x, agent_y , 35, 35))
+                          pygame.draw.ellipse(self.screen, (243, 188, 87), (agent_x, agent_y , 35, 35))
                           pygame.draw.ellipse(self.screen, (0, 0, 0), (agent_x + 10, agent_y +10 , 5, 5),3)
                           pygame.draw.ellipse(self.screen, (0, 0, 0), (agent_x + 20, agent_y +10 , 5, 5),3)
                           pygame.draw.arc(self.screen, (0, 0, 0),  pygame.Rect(mouth_pos[0]-mouth_radius, mouth_pos[1]-mouth_radius, 2*mouth_radius, 2*mouth_radius), 3.54, 5.88, 3)
@@ -191,11 +196,11 @@ class Study(gym.Env):
             pygame.display.update()
 
             pygame.time.wait(25)
+
         elif self.render_mode == None:
           pass
         else:
             raise ValueError("render_mode {} not recognized".format(self.render_mode))
-
 def test():
     render_mode = "graphic"  # 'inline'
     # Initialize the environment

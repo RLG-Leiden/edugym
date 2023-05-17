@@ -16,3 +16,16 @@ Executing an environment lets the user play ane pisode themselves by issuing act
 ```shell
 python3 -m edugym.envs.supermarket
 ```
+Below is a table of the available Agents / Environments paths one can execute
+
+| Environments               | Agents                                    |
+|----------------------------|-------------------------------------------|
+| edugym.envs.boulder        | edugym.agents.DynaAgent                   |
+| edugym.envs.catch          | edugym.agents.DynamicProgrammingAgent     |
+| edugym.envs.golf           | edugym.agents.ModelLearningAgent          |
+| edugym.envs.memorycorridor | edugym.agents.PrioritizedSweepingAgent     |
+| edugym.envs.roadrunner     | edugym.agents.QLearningAgent              |
+| edugym.envs.study          | edugym.agents.QLearningAgentDiscretized   |
+| edugym.envs.supermarket    | edugym.agents.QLearningAgentFrameStacking |
+| edugym.envs.tamagotchi     | edugym.agents.SarsaAgent                  |
+| edugym.envs.trashbot       |                                           |

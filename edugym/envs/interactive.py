@@ -11,10 +11,16 @@ def play_env(env, input_prompt, input_to_action):
     while not done:
         chosen_action = None
         event = pygame.event.wait()
-        if  event.type == pygame.KEYDOWN:
+        do_quit = lambda: env.close()
+        if event.type == pygame.QUIT:
+            do_quit()
+            return
+        if event.type == pygame.KEYDOWN:
             if event.key in input_to_action.keys():
                 chosen_action = input_to_action[event.key]
-    
+            if event.key == pygame.K_ESCAPE:
+                do_quit()
+                return
         if chosen_action is not None:
             next_state, reward, done, truncated, info = env.step(chosen_action)
             done = done or truncated

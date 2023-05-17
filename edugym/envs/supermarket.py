@@ -26,7 +26,7 @@ blue = (0, 0, 255)
 class SupermarketEnv(gym.Env):
     metadata = {"render.modes": ["inline", "graphic"]}
 
-    def __init__(self, step_timeout=0.0, noise=0.0, render_mode="graphic"):
+    def __init__(self, step_timeout=0.0, noise=0.0, render_mode="graphic", use_single_dim=False):
 
         """
         Initialize the Supermarket environment.
@@ -54,8 +54,11 @@ class SupermarketEnv(gym.Env):
         # Observation space: (x,y) location and whether we picked up each of the three items
         self.state_dims = [self.width, self.height, 2, 2, 2]
         self.n_states = np.prod(self.state_dims)
-        # self.observation_space = spaces.Discrete(self.n_states)
-        self.observation_space = spaces.MultiDiscrete(self.state_dims)
+        self.use_single_dim = use_single_dim
+        if use_single_dim:
+            self.observation_space = spaces.Discrete(self.n_states)
+        else:
+            self.observation_space = spaces.MultiDiscrete(self.state_dims)
 
         # Action space: up, down, left, right
         self.n_actions = 4
@@ -223,8 +226,8 @@ class SupermarketEnv(gym.Env):
         )  # start in (0,1) with none of the three items collected
         self.done = False
         self.state = self.vector_to_state(vector_state)
-        return np.array(self.state_to_vector(self.state))
-
+        obs = self.state if self.use_single_dim else np.array(self.state_to_vector(self.state))
+        return obs
     def can_call_step(self):
         """
         Checks whether enough time has passed for a new call to step() (without actually calling step()).  
@@ -331,7 +334,8 @@ class SupermarketEnv(gym.Env):
         self.state = next_state
         self.done = done
         info = {}
-        return np.array(self.state_to_vector(next_state)), reward, done, False, info
+        obs = next_state if self.use_single_dim else np.array(self.state_to_vector(next_state))
+        return obs, reward, done, False, info
 
     def render(self):
         """

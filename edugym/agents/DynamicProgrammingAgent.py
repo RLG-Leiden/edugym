@@ -130,13 +130,14 @@ def test():
     gamma = 1.0
     threshold = 0.01
 
-    env = SupermarketEnv(step_timeout=step_timeout)
+    env = SupermarketEnv(step_timeout=step_timeout, use_single_dim=True)
     DPAgent = DynamicProgrammingAgent(
         env.observation_space.n, env.action_space.n, gamma
     )
     DPAgent.train(env.descriptive_model, threshold)
 
     done = False
+    truncated = False
     s = env.reset()
     while not done and not truncated:
         a = DPAgent.select_action(s)
@@ -152,7 +153,7 @@ def test():
     performances = np.empty([len(noise_levels), n_repetitions])
     for i, noise in enumerate(noise_levels):
         for j in range(n_repetitions):
-            env = SupermarketEnv(step_timeout=0.0, noise=noise)
+            env = SupermarketEnv(step_timeout=0.0, noise=noise, use_single_dim=True)
             DPAgent = DynamicProgrammingAgent(
                 env.observation_space.n, env.action_space.n, gamma
             )

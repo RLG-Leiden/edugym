@@ -18,14 +18,6 @@
 import gymnasium as gym
 import numpy as np
 import pygame
-import sys
-import os
-def is_notebook():
-    try:
-        get_ipython
-        return True
-    except NameError:
-        return False
 
 _ACTIONS = (-1, 0, 1)  # Left, no-op, right.
 ACTION_LEFT = -1
@@ -244,13 +236,8 @@ class Catch(gym.Env):
             
             # Flip the display
             pygame.display.flip()
-            if is_notebook():
-                from IPython.display import Image, display
-                pygame.image.save(self.screen, 'frame.png')
-                display(Image(filename='frame.png'))
-            else:
-                # Wait for a short time to slow down the rendering
-                pygame.time.wait(25)
+            # Wait for a short time to slow down the rendering
+            pygame.time.wait(25)
         else:
             render_grid = self._observation()
             print("\n")

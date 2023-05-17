@@ -159,8 +159,8 @@ def test():
 
     results = []
     for rep in range(n_repetitions):
-        env = SupermarketEnv()
-        eval_env = SupermarketEnv(step_timeout=0.0)
+        env = SupermarketEnv(use_single_dim=True)
+        eval_env = SupermarketEnv(step_timeout=0.0, use_single_dim=True)
         Agent = SarsaAgent(
             env.observation_space.n, env.action_space.n, gamma, learning_rate
         )

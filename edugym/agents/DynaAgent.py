@@ -225,8 +225,8 @@ def test():
     for planning_budget in planning_budget_seconds:
         results = []
         for rep in range(n_repetitions):
-            env = SupermarketEnv(step_timeout=planning_budget)
-            eval_env = SupermarketEnv(step_timeout=0.0)
+            env = SupermarketEnv(step_timeout=planning_budget, use_single_dim=True)
+            eval_env = SupermarketEnv(step_timeout=0.0, use_single_dim=True)
             Agent = DynaAgent(
                 env.observation_space.n, env.action_space.n, gamma, learning_rate
             )

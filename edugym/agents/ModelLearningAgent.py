@@ -94,7 +94,7 @@ def test():
     from edugym.envs.supermarket import SupermarketEnv
     # DP with perfect model
     step_timeout = 0.0
-    env = SupermarketEnv(step_timeout=step_timeout)
+    env = SupermarketEnv(step_timeout=step_timeout, use_single_dim=True)
     MLAgent = ModelLearningAgent(env.observation_space.n, env.action_space.n)
 
     n_steps = 1000

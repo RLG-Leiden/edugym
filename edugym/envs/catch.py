@@ -197,40 +197,50 @@ class Catch(gym.Env):
             if not self.pygame_initialized:
                 pygame.init()
                 self.cell_size = 50
-                screen_width, screen_height = (
+                self.screen_width, self.screen_height = (
                     self.width * self.cell_size,
                     (self.height) * self.cell_size,
                 )
-                self.screen = pygame.display.set_mode([screen_width, screen_height])
+                self.screen = pygame.display.set_mode([self.screen_width, self.screen_height])
                 pygame.display.set_caption("Catch Environment")
                 self.pygame_initialized = True
 
             # Set background color
-            self.screen.fill(black)
+            self.screen.fill(dark_blue)
             grid_width = 5
             # Draw white bg
-            pygame.draw.rect(self.screen, white, pygame.Rect(
+            pygame.draw.rect(self.screen, ligth_grey, pygame.Rect(
                 grid_width,
                 grid_width,
-                screen_width - 10,
-                screen_height - 10,
+                self.screen_width - 10,
+                self.screen_height - 10,
             ))
-
 
             # Draw Ball
-            pygame.draw.rect(self.screen, yellow, pygame.Rect(
-                (self._ball_x * self.cell_size) + grid_width,
-                (max(0, (self._ball_y)) * self.cell_size) + grid_width,
-                self.cell_size - grid_width*2,
-                self.cell_size - grid_width*2,
-            ))
+            light_yellow = (243, 188, 87)
+            ball_radius = ((self.cell_size - grid_width*4) // 2)
+            pygame.draw.circle(self.screen, light_yellow,(
+                (self._ball_x * self.cell_size) + grid_width*2 + ball_radius,
+                (max(0, (self._ball_y)) * self.cell_size) + grid_width*3 + ball_radius),
+                ball_radius,
+            )
             # Draw Paddle
-            pygame.draw.rect(self.screen, green, pygame.Rect(
-                (self._paddle_x * self.cell_size) + grid_width,
-                ((self._paddle_y) * self.cell_size + (self.cell_size/2)) + grid_width,
-                self.cell_size  - grid_width*2,
-                (self.cell_size / 2) - grid_width*2,
-            ))
+            paddle_color = (156,39,6)
+            x_pos = (self._paddle_x * self.cell_size) + grid_width
+            y_pos = ((self._paddle_y) * self.cell_size + (self.cell_size/2)) + grid_width
+            width = self.cell_size  - grid_width*2
+            height = (self.cell_size / 2) - grid_width*2
+            pygame.draw.polygon(self.screen, paddle_color, [
+                (x_pos, y_pos),
+                (x_pos + width/10, y_pos),
+                (x_pos + width/10, y_pos + (height - (height / 10))),
+                (x_pos + (width -  width/10), y_pos + (height - (height / 10))),
+                (x_pos + (width -  width/10), y_pos),
+                (x_pos + width, y_pos),
+                (x_pos + width, y_pos + height),
+                (x_pos, y_pos + height),
+                (x_pos, y_pos),
+            ], 5)
             
             # Flip the display
             pygame.display.flip()

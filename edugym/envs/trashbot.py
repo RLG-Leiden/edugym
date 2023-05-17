@@ -310,9 +310,10 @@ def droppable(crate: Box, container: Box, height=10) -> bool:
 def test():
     render_mode = "graphic"  # 'inline'
     # Initialize the environment
-    from edugym.envs.interactive import play_env
+    from edugym.envs.interactive import play_env, play_env_terminal
     env = TrashBotDiscreteEnv(render_mode=render_mode, n_bins=2, action_scaling=0.1)
-    play_env(env, "left=a, right=d", {"a": [0, 0], "d": [1, 1]})
+    play_env(env, "left=a, right=d", {pygame.K_a: [0, 0], pygame.K_d: [1, 1]})
+    # play_env_terminal(env, "left=a, right=d", {"a": [0, 0], "d": [1, 1]})
 
 if __name__ == "__main__":
     test()

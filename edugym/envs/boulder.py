@@ -217,7 +217,7 @@ def test():
     # Initialize the environment
     from edugym.envs.interactive import play_env
     env = BoulderEnv(render_mode=render_mode)
-    play_env(env, "a=left, d=right", {"a":0, "d": 1})
+    play_env(env, "a=left, d=right", {pygame.K_a:0, pygame.K_d: 1})
 
 if __name__ == "__main__":
     test()

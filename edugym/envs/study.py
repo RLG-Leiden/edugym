@@ -204,9 +204,10 @@ class Study(gym.Env):
 def test():
     render_mode = "graphic"  # 'inline'
     # Initialize the environment
-    from edugym.envs.interactive import play_env
+    from edugym.envs.interactive import play_env, play_env_terminal
     env = Study(render_mode=render_mode)
-    play_env(env, "s=study, z=sleep, g=go_out, o=other", {"s":2, "z": 0, "g": 1, "o":3})
+    play_env(env, "s=study, z=sleep, g=go_out, o=other", {pygame.K_s:2, pygame.K_z: 0, pygame.K_g: 1, pygame.K_o:3})
+    # play_env_terminal(env, "s=study, z=sleep, g=go_out, o=other", {"s":2, "z": 0, "g": 1, "o":3})
 
 if __name__ == "__main__":
     test()

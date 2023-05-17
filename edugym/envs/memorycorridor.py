@@ -267,9 +267,10 @@ class MemoryCorridorEnv(gymnasium.Env):
 def test():
     render_mode = "graphic"  # 'inline'
     # Initialize the environment
-    from edugym.envs.interactive import play_env
+    from edugym.envs.interactive import play_env, play_env_terminal
     env = MemoryCorridorEnv(render_mode=render_mode)
-    play_env(env, "1=First Door, 2=Second Door, 3=Third Door", {"1":0, "2": 1, "3": 2})
+    play_env(env, "0=First Door, 1=Second Door, 2=Third Door", {pygame.K_0:0, pygame.K_1: 1, pygame.K_2: 2})
+    # play_env_terminal(env, "1=First Door, 2=Second Door, 3=Third Door", {"1":0, "2": 1, "3": 2})
 
 if __name__ == "__main__":
     test()

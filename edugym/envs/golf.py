@@ -7,21 +7,19 @@ import numpy as np
 import pygame
 from gymnasium.spaces import Discrete, MultiDiscrete
 
-
-
 class GolfEnv(gym.Env):
     metadata = {"render_modes": {"graphic"}}
 
     def __init__(
         self,
         render_mode="graphic",
-        length=17,
+        length=16,
         width=7,
-        green_radius=1,
-        max_hits=17,
+        green_radius=1.1,
+        max_hits=15,
         stochasticity_level=0.05,
     ):
-        assert length % 2 == 1, "length of golf course must be an uneven number"
+        # assert length % 2 == 1, "length of golf course must be an uneven number"
         assert width % 2 == 1, "width of golf course must be an uneven number"
         self.length = length  # The length of the 2D golf course (start to center green)
         self.width = width
@@ -65,9 +63,9 @@ class GolfEnv(gym.Env):
                 obj.render(self.screen)
 
             # Flip the display
-            self.screen = pygame.transform.flip(self.screen, False, True)
-
-            pygame.image.save(self.screen, "frame.png")
+            # self.screen = pygame.transform.flip(self.screen, False, False)
+            # pygame.display.flip()
+            pygame.display.update()
             return view
 
     def reset(self, seed=None, options=None):
@@ -113,17 +111,17 @@ class GolfEnv(gym.Env):
 
         # An episode is done iff the ball is on the green, off course, or when the
         # maximum number of hits are reached.
-        if self.golf_course.on_green(self.ball.coordinates):
-            # Ball reached the green
-            done = True
-            reward = max((self.max_hits - self.hits) / self.max_hits, -1)
-        elif (
+        if (
             not self.observation_space.contains(self._get_obs())
             or self.hits > self.max_hits
         ):
             # Ball off course
             done = True
             reward = -1
+        elif self.golf_course.on_green(self.ball.coordinates):
+            # Ball reached the green
+            done = True
+            reward = max((self.max_hits - self.hits) / self.max_hits, -1)
         else:
             done = False
             reward = 0
@@ -154,11 +152,12 @@ class Colours:
 
 
 class RenderObject:
-    render_scale = 60
+    render_scale = 30
     fps = 10
     frame_length = int(1 / fps * 1000)
     edge_size = 1
     render_offset = np.array([edge_size] * 2)
+    draw_grid = False
 
     def scale_to_int(self, value: Union[np.ndarray, int, float]):
         if isinstance(value, int) or isinstance(value, float):
@@ -209,7 +208,7 @@ class Ball(RenderObject):
 
 
 class GolfCourse(RenderObject):
-    def __init__(self, width: int, length: int, green_radius: int):
+    def __init__(self, width: int, length: int, green_radius: float):
         self.width = width
         self.length = length
         self.green_radius = green_radius
@@ -305,6 +304,25 @@ class GolfCourse(RenderObject):
             self.scale_to_int(0.06) or 1,
         )
 
+        if self.draw_grid:
+            max_x, max_y = self.bounds[2:]
+            for x in range(max_x):
+                pygame.draw.line(
+                    screen,
+                    Colours.darkgrey,
+                    self.scale_to_int(self.render_offset + np.array([x, 0])),
+                    self.scale_to_int(self.render_offset + np.array([x, max_y])),
+                    width=1,
+                )
+            for y in range(max_y):
+                pygame.draw.line(
+                    screen,
+                    Colours.darkgrey,
+                    self.scale_to_int(self.render_offset + np.array([0, y])),
+                    self.scale_to_int(self.render_offset + np.array([max_x, y])),
+                    width=1,
+                )
+
     @property
     def render_size(self):
         render_bounds = self.bounds[2:] + np.array([self.edge_size * 2] * 2)
@@ -315,7 +333,7 @@ def test():
     # Initialize the environment
     from edugym.envs.interactive import play_env
     env = GolfEnv(render_mode=render_mode)
-    play_env(env, "p=put, c=Chip, d=drive", {"p":0, "c": 1, "d": 2})
+    play_env(env, "p=put, c=Chip, d=drive", {pygame.K_p:0, pygame.K_c: 1, pygame.K_d: 2})
 
 if __name__ == "__main__":
     test()

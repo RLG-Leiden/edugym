@@ -498,9 +498,10 @@ def test():
     render_mode = "graphic"  # 'inline'
 
     # Initialize the environment
-    from edugym.envs.interactive import play_env
+    from edugym.envs.interactive import play_env, play_env_terminal
     env = SupermarketEnv(step_timeout=0.1, render_mode=render_mode)
-    play_env(env, "w=up, s=down, a=left, d=right", {"w":0, "s": 1, "a": 2, "d": 3})
+    play_env(env, "w=up, s=down, a=left, d=right", {pygame.K_w:0, pygame.K_s: 1, pygame.K_a: 2, pygame.K_d: 3})
+    # play_env_terminal(env, "w=up, s=down, a=left, d=right", {"w":0, "s": 1, "a": 2, "d": 3})
 
     env = SupermarketEnv(step_timeout=0.1, render_mode=render_mode, use_single_dim=True)
     # Difference between step(), descriptive_model() and generative_model()

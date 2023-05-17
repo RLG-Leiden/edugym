@@ -237,9 +237,10 @@ class RoadrunnerEnv(gym.Env):
 def test():
     render_mode = "graphic"  # 'inline'
     # Initialize the environment
-    from edugym.envs.interactive import play_env
+    from edugym.envs.interactive import play_env, play_env_terminal
     env = RoadrunnerEnv(render_mode=render_mode)
-    play_env(env, "w=speed up, s=slow down, d= do nothing / idle", {"w":0, "s": 1, "d": 2})
+    play_env(env, "w=speed up, s=slow down, d= do nothing / idle", {pygame.K_w:0, pygame.K_s: 1, pygame.K_d: 2})
+    # play_env_terminal(env, "w=speed up, s=slow down, d= do nothing / idle", {"w":0, "s": 1, "d": 2})
 
 if __name__ == "__main__":
     test()

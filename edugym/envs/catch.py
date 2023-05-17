@@ -263,7 +263,7 @@ def test():
     # Initialize the environment
     from edugym.envs.interactive import play_env
     env = Catch(render_mode=render_mode)
-    play_env(env, "s=stay, a=left, d=right", {"a":0, "s": 1, "d": 2})
+    play_env(env, "s=stay, a=left, d=right", {pygame.K_a: 0, pygame.K_s: 1, pygame.K_d: 2})
 
 if __name__ == "__main__":
     test()

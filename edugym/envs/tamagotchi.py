@@ -375,9 +375,10 @@ class TamagotchiEnv(gym.Env):
 def test():
     render_mode = "graphic"  # 'inline'
     # Initialize the environment
-    from edugym.envs.interactive import play_env
+    from edugym.envs.interactive import play_env, play_env_terminal
     env = TamagotchiEnv(render_mode=render_mode)
-    play_env(env, "play=p, sleep=s, clean=c, feed=f", {"p": 0, "s": 1, "c": 2, "f":3})
+    play_env(env, "play=p, sleep=s, clean=c, feed=f", {pygame.K_p: 0, pygame.K_s: 1, pygame.K_c: 2, pygame.K_f:3})
+    # play_env_terminal(env, "play=p, sleep=s, clean=c, feed=f", {"p": 0, "s": 1, "c": 2, "f":3})
 
 if __name__ == "__main__":
     test()

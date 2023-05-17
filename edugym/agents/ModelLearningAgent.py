@@ -8,7 +8,6 @@ Edugym: Model Learning Agent
 import numpy as np
 
 from edugym.agents.Agent import Agent
-from edugym.envs.supermarket import SupermarketEnv
 
 
 class ModelLearningAgent(Agent):
@@ -92,6 +91,7 @@ class ModelLearningAgent(Agent):
 def test():
     """ Notebook experiments with a Model Learning Agent """
 
+    from edugym.envs.supermarket import SupermarketEnv
     # DP with perfect model
     step_timeout = 0.0
     env = SupermarketEnv(step_timeout=step_timeout)

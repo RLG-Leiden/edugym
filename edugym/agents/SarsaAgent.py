@@ -8,7 +8,6 @@ Edugym: SARSA Agent
 import numpy as np
 
 from edugym.agents.Agent import Agent
-from edugym.envs.supermarket import SupermarketEnv
 
 
 class SarsaAgent(Agent):
@@ -149,6 +148,7 @@ class SarsaAgent(Agent):
 
 def test():
     """ Basic SARSA experiment """
+    from edugym.envs.supermarket import SupermarketEnv
 
     learning_rate = 0.1
     gamma = 1.0

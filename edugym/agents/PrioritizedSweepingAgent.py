@@ -9,7 +9,6 @@ import numpy as np
 from queue import PriorityQueue
 
 from edugym.agents.Agent import Agent
-from edugym.envs.supermarket import SupermarketEnv
 
 
 class PrioritizedSweepingAgent(Agent):
@@ -208,6 +207,7 @@ class PrioritizedSweepingAgent(Agent):
 def test():
     """ Notebook experiments with Prioritized Sweeping """
 
+    from edugym.envs.supermarket import SupermarketEnv
     learning_rate = 0.1
     gamma = 1.0
     epsilon = 0.1

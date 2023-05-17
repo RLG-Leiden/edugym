@@ -7,7 +7,6 @@ Edugym: Dyna Agent
 
 import numpy as np
 from edugym.agents.Agent import Agent
-from edugym.envs.supermarket import SupermarketEnv
 
 
 class DynaAgent(Agent):
@@ -212,6 +211,7 @@ class DynaAgent(Agent):
 def test():
     """ Notebook experiments with Dynamic Programming """
 
+    from edugym.envs.supermarket import SupermarketEnv
     learning_rate = 0.1
     gamma = 1.0
     epsilon = 0.1

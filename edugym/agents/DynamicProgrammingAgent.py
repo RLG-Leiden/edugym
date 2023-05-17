@@ -8,7 +8,6 @@ Edugym: Dynamic Programming Agent
 import numpy as np
 
 from edugym.agents.Agent import Agent
-from edugym.envs.supermarket import SupermarketEnv
 
 
 class DynamicProgrammingAgent(Agent):
@@ -125,6 +124,7 @@ class DynamicProgrammingAgent(Agent):
 def test():
     """ Notebook experiments with Dynamic Programming """
 
+    from edugym.envs.supermarket import SupermarketEnv
     # 1. DP with perfect model
     step_timeout = 0.0
     gamma = 1.0

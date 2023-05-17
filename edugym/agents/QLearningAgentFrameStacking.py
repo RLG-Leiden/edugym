@@ -3,8 +3,6 @@ import random
 from gymnasium import Env
 from collections import deque
 
-from edugym.envs.memorycorridor import MemoryCorridorEnv
-
 
 class QLearningAgent_Framestacking:
     def __init__(
@@ -130,6 +128,8 @@ class QLearningAgent_Framestacking:
 def test():
     """Basic Q-learning experiment"""
 
+
+    from edugym.envs.memorycorridor import MemoryCorridorEnv
     learning_rate = 0.1
     gamma = 0.99
     epsilon = 0.1

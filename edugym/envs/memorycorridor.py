@@ -111,19 +111,38 @@ class MemoryCorridorEnv(gymnasium.Env):
                         print(door_type + " " * (door_w - 2) + door_type, end="   ")
                 print()
             print()
-        elif self.render_mode == "graphic":
-            if not self.pygame_initialized:
-                # Define door dimensions
-                self.door_w = 100
-                self.door_h = 200
-                self.door_x = 100
-                self.door_y = 100
+        elif self.render_mode == "pygame":
+            # Define door dimensions
+            door_width = 200
+            door_height = 400
+            door_x = door_width // 2
+            door_y = 100
 
+            # Define the colors for the room
+            wall_color = (127, 176, 105)
+            floor_color = (230, 170, 104)
+            ceiling_color = wall_color
+
+            # define the colors for the door
+            door_border_color = (29, 26, 5)
+            door_color = (202, 60, 37)
+            knob_color = (255, 255, 255)
+            knob_shade_color = (200, 200, 200)
+            window_color = (208, 233, 241)
+            windows_color_border = door_border_color
+
+            num_doors = self.num_doors
+            obs = self._get_obs()
+            info = self._get_info()
+
+            if not self.pygame_initialized:
                 pygame.init()
+                self.screen_width = self.num_doors * (door_width + door_x) + door_x
+                self.screen_height = door_height + door_y + (door_height // 4)
                 self.screen = pygame.display.set_mode(
                     (
-                        self.num_doors * (self.door_w + self.door_x),
-                        self.door_h + self.door_y + 50,
+                        self.screen_width,
+                        self.screen_height,
                     )
                 )
                 self.clock = pygame.time.Clock()
@@ -131,56 +150,101 @@ class MemoryCorridorEnv(gymnasium.Env):
                 pygame.display.set_caption("MemoryCorridorEnv PyGame Visualization")
                 self.pygame_initialized = True
 
-            num_doors = self.num_doors
-            obs = self._get_obs()
-            info = self._get_info()
+            def draw_door(d, x):
+                door_surface_rect = pygame.Rect(x, door_y, door_width, door_height)
 
-            # Define door colors
-            white = (255, 255, 255)
-            dark_brown = (139, 69, 19)
-            correct_door_color = (255, 215, 0)
+                # Draw the door surface
+                door_surface = pygame.Surface((door_width, door_height))
+                door_surface.fill(door_border_color)
 
-            # Clear the screen
-            self.screen.fill((0, 0, 0))
-            border_width = 4
+                # use the surface as the border and draw the door surface on it
+                door_rect = pygame.Rect(2, 2, door_width - 4, door_height)
+                pygame.draw.rect(door_surface, door_color, door_rect)
 
-            for d in range(num_doors):
-                if obs == d:
-                    door_color = correct_door_color
-                else:
-                    door_color = white
-                # Draw the door rectangle with a light brown color
-                door_rect = pygame.Rect(
-                    self.door_x + d * (self.door_w + 50),
-                    self.door_y,
-                    self.door_w,
-                    self.door_h - border_width,
-                )
-                pygame.draw.rect(self.screen, door_color, door_rect)
+                # Draw the windows on the door incl border
+                window_width = door_width - 20
+                window_height = door_height // 3
+                window_rect = pygame.Rect(10, 10, window_width, window_height)
+                pygame.draw.rect(door_surface, windows_color_border, window_rect)
+                window_rect = pygame.Rect(12, 12, window_width - 4, window_height - 4)
+                pygame.draw.rect(door_surface, window_color, window_rect)
 
-                # Draw the door border with a dark brown color
-                border_rect = pygame.Rect(
-                    self.door_x + d * (self.door_w + 50),
-                    self.door_y,
-                    self.door_w,
-                    self.door_h,
-                )
-                pygame.draw.rect(self.screen, dark_brown, border_rect, border_width)
+                if not (0 <= obs < num_doors):
+                    # draw ? in the window when no information in the observation
+                    font_size = window_height // 2
+                    font = pygame.font.SysFont(None, font_size)
+                    text_surface = font.render("?", True, (0, 0, 0))
+                    text_rect = text_surface.get_rect(center=(door_width // 2, window_height // 2))
+                    door_surface.blit(text_surface, text_rect)
 
                 # Draw the door knob
-                knob_x = self.door_x + d * (self.door_w + 50) + self.door_w // 2 - (self.door_w // 3)
-                knob_y = self.door_y + self.door_h // 2 - 10
-                knob_rect = pygame.Rect(knob_x, knob_y, 20, 10)
-                pygame.draw.ellipse(self.screen, (35, 35, 35), knob_rect)
+                knob_radius = door_width // 25
+                knob_x = door_width // 4
+                knob_y = door_height // 2
 
-                # Render the door number on the door
-                font_size = 36
-                font_obj = pygame.font.Font(None, font_size)
-                door_number = str(d)
-                text_surface = font_obj.render(door_number, True, (0, 0, 0))  # Black color for the text
-                text_rect = text_surface.get_rect()
-                text_rect.center = (self.door_x + d * (self.door_w + 50) + self.door_w // 2, self.door_y + self.door_h // 4)
-                self.screen.blit(text_surface, text_rect)
+                pygame.draw.circle(door_surface, knob_color, (knob_x, knob_y), knob_radius)
+
+                # Draw the shining shade on the door knob
+                shade_radius = knob_radius - 2
+                shade_rect = pygame.Rect(knob_x - shade_radius - 1, knob_y - shade_radius - 1, shade_radius * 2, shade_radius * 2)
+                pygame.draw.ellipse(door_surface, knob_shade_color, shade_rect)
+
+                # Render the number of the door
+                font_size = door_height // 10
+                font_color = (255, 255, 255)  # White color for the text
+                font = pygame.freetype.SysFont(None, font_size)
+                text_surface, _ = font.render(str(d), font_color)
+
+                text_x = door_width // 2 - text_surface.get_width() // 2
+                text_y = door_height // 2 - text_surface.get_height() // 2
+
+                # Draw the text onto the door surface
+                door_surface.blit(text_surface, (text_x, text_y))
+
+                # Draw the door on the screen
+                self.screen.blit(door_surface, door_surface_rect)
+
+            def draw_light(d, x):
+                light_color_on = (255, 255, 0)  # Yellow color when the light is on
+                light_color_off = (128, 128, 128)  # Gray color when the light is off
+
+                light_color = light_color_on if d == obs else light_color_off
+
+                light_y = door_y // 3
+                light_width = door_width // 4
+                light_height = door_height // 6
+                x = x - light_width // 2
+
+                pygame.draw.ellipse(self.screen, (0, 0, 0), (x - 2, light_y - 2, light_height + 4, light_width + 4))  # border of the light
+                pygame.draw.ellipse(self.screen, light_color, (x, light_y, light_height, light_width))
+
+                # Draw a smaller white circle inside the light for a highlight effect
+                if d == obs:
+                    highlight_radius = light_height // 7
+                    highlight_color = (255, 255, 255)  # White color for the highlight
+                    pygame.draw.circle(self.screen, highlight_color, (x + light_width // 2, light_y + light_height // 2), highlight_radius)
+
+                # draw grates in front of the light
+                pygame.draw.line(self.screen, (0, 0, 0), (x, light_y + light_height // 3), (x + light_height, light_y + light_height // 3), 2)
+
+            # Fill the screen surface with the room colors (wall, floor, ceiling)
+            self.screen.fill(wall_color)
+            pygame.draw.rect(self.screen, floor_color, (0, door_y + door_height, self.screen_width, self.screen_height))
+            pygame.draw.rect(self.screen, ceiling_color, (0, 0, self.screen_width, door_y - 50))
+
+            # draw a new surface and rotate it to create perspective
+            new_surface = pygame.Surface((door_width, door_height), pygame.SRCALPHA)
+            new_surface.fill(wall_color)
+            new_surface = pygame.transform.rotate(new_surface, -45)
+            self.screen.blit(new_surface, (0 - door_width, self.screen_height - door_height))
+            new_surface = pygame.transform.rotate(new_surface, 90)
+            self.screen.blit(new_surface, (self.screen_width - door_width, self.screen_height - door_height))
+
+            for d in range(num_doors):  # doors and lights
+                door_x_pos = door_x + d * (door_width + door_width // 2)
+                light_x_pos = door_x_pos + door_width // 2
+                draw_door(d, door_x_pos)
+                draw_light(d, light_x_pos)
 
             # Update the Pygame window
             pygame.display.flip()

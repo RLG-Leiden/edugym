@@ -8,7 +8,7 @@ from gymnasium.spaces.box import Box as sBox
 from gymnasium.spaces.multi_discrete import MultiDiscrete
 
 class TrashBot(gymnasium.Env):
-    def __init__(self, container_width=80, render_mode='human',
+    def __init__(self, container_width=80, render_mode='graphic',
                  action_scaling=1, action_range=(-1, 1), mode='angle'):
         super().__init__()
 
@@ -31,6 +31,7 @@ class TrashBot(gymnasium.Env):
         # Rendering
         self.screen = None
         self.steps = 0
+        self.render_mode = render_mode
 
     def reset(self, seed=None):
         self.crates = [Crate(coords=[65, 300], color='r', margin=0)]
@@ -97,7 +98,8 @@ class TrashBot(gymnasium.Env):
             r -= 1
         return self._get_obs(), r, done, truncated, {}
 
-    def render(self, mode='human'):
+    def render(self):
+        mode = self.render_mode
         view, img_bgr = None, None
         if self.screen is None:
             pygame.init()
@@ -107,10 +109,7 @@ class TrashBot(gymnasium.Env):
             obj.render(self.screen)
         pygame.display.flip()
 
-        if mode == 'human' and colab_rendering:
-            cv2_imshow(img_bgr)
-            pygame.time.wait(TrashBotConfig.frame_length)
-        elif mode == 'save':
+        if mode == 'save':
             pygame.image.save(self.screen, 'frame.png')
         return view
 
@@ -307,3 +306,13 @@ def droppable(crate: Box, container: Box, height=10) -> bool:
     x3, y3, x4, y4 = container.bounds
     center_offset = abs(crate.origin[0] - container.origin[0])
     return x1 > x3 and x2 < x4 and (-height < (y2 - y3) < 4 * height), center_offset
+
+def test():
+    render_mode = "graphic"  # 'inline'
+    # Initialize the environment
+    from edugym.envs.interactive import play_env
+    env = TrashBotDiscreteEnv(render_mode=render_mode, n_bins=2, action_scaling=0.1)
+    play_env(env, "left=a, right=d", {"a": [0, 0], "d": [1, 1]})
+
+if __name__ == "__main__":
+    test()

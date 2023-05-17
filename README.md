@@ -12,7 +12,7 @@ Executing an agent will train and evaluate it producing a learning curve, e.g.:
 ```shell
 python3 -m edugym.agents.QLearningAgent
 ```
-Executing an environment lets the user play ane pisode themselves by issuing actions via the command line:
+Executing an environment lets the user play an episode themselves. The key mapping will be output in the terminal:
 ```shell
 python3 -m edugym.envs.supermarket
 ```

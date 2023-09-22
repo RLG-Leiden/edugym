@@ -12,6 +12,7 @@ class QLearningAgent(Agent):
         n_actions (int): The number of possible actions.
         gamma (float, optional): The discount factor used in the Q-learning algorithm. The default value is 1.0.
         learning_rate (float, optional): The learning rate (alpha) used in the Q-learning algorithm. The default value is 0.1.
+        beta (float, optional): Parameter that scales risk-sensitive Q-learning. Defaults to 0.0, in which case it has no influence. 
         """
         super().__init__()
         self.n_states = n_states

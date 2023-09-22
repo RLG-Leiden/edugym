@@ -1,37 +1,41 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Edugym: Supermarket environment
-Specifically designed for model-based reinforcement learning experiments
-
-"""
-
 import gymnasium as gym
-from gymnasium import spaces
+from gym import spaces
 import numpy as np
 import time
 import pygame
 import sys
+
+colab_rendering = "google.colab" in sys.modules
+
+if colab_rendering:
+    import cv2
+    from google.colab.patches import cv2_imshow
+    from google.colab import output
+    import os
+
+    # set SDL to use the dummy NULL video driver, so it doesn't need a windowing system.
+    os.environ["SDL_VIDEODRIVER"] = "dummy"
 
 # Define colors
 white = (255, 255, 255)
 black = (0, 0, 0)
 grey = (128, 128, 128)
 red = (255, 0, 0)
-yellow = (255, 255, 0)
+yellow = (252, 208, 24)
+# yellow = (220, 220, 160)
 green = (0, 255, 0)
 blue = (0, 0, 255)
 
 
 class SupermarketEnv(gym.Env):
-    metadata = {"render.modes": ["inline", "graphic"]}
+    metadata = {"render.modes": ["graphic", "terminal", "none"]}
 
-    def __init__(self, step_timeout=0.0, noise=0.0, render_mode="graphic", use_single_dim=False):
+    def __init__(self, step_timeout=0.0, noise=0.0, render_mode='graphic', seed=None):
 
         """
         Initialize the Supermarket environment.
-        
-        
+
+
         -- s ------
         |       i |       s = start
         |         |       i = item
@@ -41,12 +45,16 @@ class SupermarketEnv(gym.Env):
         |  |   |  |
         |i        |
         ------ e --
-        
-        
+
+
         Parameters:
-            step_timeout (float): Timeout in seconds between calls to the step function. 
+            step_timeout (float): Timeout in seconds between calls to the step function.
+            noise (float): standard deviation of a noise added to the reward per step. Noise per step is fixed once at environment initialization.
 
         """
+        super().__init__()
+        self.seed(seed)
+
         # Grid size
         self.width = 10
         self.height = 10
@@ -54,11 +62,8 @@ class SupermarketEnv(gym.Env):
         # Observation space: (x,y) location and whether we picked up each of the three items
         self.state_dims = [self.width, self.height, 2, 2, 2]
         self.n_states = np.prod(self.state_dims)
-        self.use_single_dim = use_single_dim
-        if use_single_dim:
-            self.observation_space = spaces.Discrete(self.n_states)
-        else:
-            self.observation_space = spaces.MultiDiscrete(self.state_dims)
+        self.observation_space = spaces.Discrete(self.n_states)
+        # self.observation_space = spaces.MultiDiscrete(self.state_dims)
 
         # Action space: up, down, left, right
         self.n_actions = 4
@@ -88,6 +93,10 @@ class SupermarketEnv(gym.Env):
         # Initialize the state
         self.noise = noise
         self._build_model(noise)
+
+    def seed(self, seed=None):
+        super().reset(seed=seed)
+        np.random.seed(seed)
 
     def _build_grid(self):
         # Create the grid: 0 = empty, 1 = wall
@@ -211,14 +220,13 @@ class SupermarketEnv(gym.Env):
                     self.p_sas[s, a, s_prime] = 1.0  # update transition table
                     self.r_sas[s, a, s_prime] += extra_reward
 
-    def reset(self, seed=None):
+    def reset(self):
         """
         Reset the supermarket environment to its initial state.
 
         Returns:
             state (np.ndarray): The current state of the environment.
         """
-        super().reset(seed=seed)
 
         # Create the state
         vector_state = np.array(
@@ -226,11 +234,11 @@ class SupermarketEnv(gym.Env):
         )  # start in (0,1) with none of the three items collected
         self.done = False
         self.state = self.vector_to_state(vector_state)
-        obs = self.state if self.use_single_dim else np.array(self.state_to_vector(self.state))
-        return obs
+        return self.state
+
     def can_call_step(self):
         """
-        Checks whether enough time has passed for a new call to step() (without actually calling step()).  
+        Checks whether enough time has passed for a new call to step() (without actually calling step()).
 
         Returns:
         step_can_be_called (bool): whether step() will execute (True) or not (False)
@@ -247,7 +255,7 @@ class SupermarketEnv(gym.Env):
 
     def time_till_next_possible_step(self):
         """
-        Prints the minimal time left until we can call step() again. 
+        Prints the minimal time left until we can call step() again.
         """
         return max(self.step_timeout - (time.time() - self.last_call_to_step), 0)
 
@@ -257,7 +265,7 @@ class SupermarketEnv(gym.Env):
 
         Parameters:
         state (np.array): The vectorized state.
-        
+
         Returns:
         index (int): A unique identifier for the given state.
         """
@@ -270,7 +278,7 @@ class SupermarketEnv(gym.Env):
 
         Parameters:
         index (int): The unique identifier for the state.
-        
+
         Returns:
         state (np.array): The vectorized state associated with the given index.
         """
@@ -334,20 +342,19 @@ class SupermarketEnv(gym.Env):
         self.state = next_state
         self.done = done
         info = {}
-        obs = next_state if self.use_single_dim else np.array(self.state_to_vector(next_state))
-        return obs, reward, done, False, info
+        return next_state, reward, done, False, info
 
-    def render(self):
+    def render(self, mode="graphic"):
         """
         Render the environment using Pygame.
-        
+
         Parameters:
             mode (str): 'inline' for inline plotting, 'graphic' for pygame visualisation
-        
+
         Returns:
             np.ndarray: A 3D array of the RGB values of the pixels in the window.
         """
-        mode = self.render_mode
+
         assert mode in ["inline", "graphic"], print(
             "mode needs to be 'inline' or 'graphic'"
         )
@@ -365,7 +372,7 @@ class SupermarketEnv(gym.Env):
         render_grid[self.exit_location[0], self.exit_location[1]] = 5
         render_grid[y, x] = 6  # agent
 
-        if mode == "inline":
+        if mode == "terminal":
             # Visualize the grid
             print("\n")
             for y, row_data in enumerate(render_grid):
@@ -398,8 +405,8 @@ class SupermarketEnv(gym.Env):
                 pygame.display.set_caption("Supermarket Environment")
                 self.pygame_initialized = True
 
-#            if colab_rendering:
-#                output.clear()
+            #            if colab_rendering:
+            #                output.clear()
 
             # Set background color
             self.screen.fill(white)
@@ -422,32 +429,128 @@ class SupermarketEnv(gym.Env):
                     elif render_grid[y][x] == 2:
                         # Apple
                         green_apple = (75, 122, 71)
-                        pygame.draw.circle(self.screen, red, (x * self.cell_size + self.cell_size // 2, y * self.cell_size + self.cell_size // 2), self.cell_size // 4)
-                        pygame.draw.circle(self.screen, black, (x * self.cell_size + self.cell_size // 2, y * self.cell_size + self.cell_size // 2), self.cell_size // 4,2)
-                        pygame.draw.line(self.screen, green_apple, (x * self.cell_size + self.cell_size // 2, y * self.cell_size + self.cell_size // 3.75 ), (x * self.cell_size + self.cell_size // 1.3, y * self.cell_size + self.cell_size // 8), 5)
+                        pygame.draw.circle(
+                            self.screen,
+                            red,
+                            (
+                                x * self.cell_size + self.cell_size // 2,
+                                y * self.cell_size + self.cell_size // 2,
+                            ),
+                            self.cell_size // 4,
+                        )
+                        pygame.draw.circle(
+                            self.screen,
+                            black,
+                            (
+                                x * self.cell_size + self.cell_size // 2,
+                                y * self.cell_size + self.cell_size // 2,
+                            ),
+                            self.cell_size // 4,
+                            2,
+                        )
+                        pygame.draw.line(
+                            self.screen,
+                            green_apple,
+                            (
+                                x * self.cell_size + self.cell_size // 2,
+                                y * self.cell_size + self.cell_size // 3.75,
+                            ),
+                            (
+                                x * self.cell_size + self.cell_size // 1.3,
+                                y * self.cell_size + self.cell_size // 8,
+                            ),
+                            5,
+                        )
 
                     elif render_grid[y][x] == 3:
                         # Beer can
                         can_color = (200, 200, 40)
-                        can_top = (150,150,150)
+                        can_top = (150, 150, 150)
 
-                        pygame.draw.ellipse(self.screen, can_color, (x * self.cell_size + 10 , y * self.cell_size + 40 , 30, 10))
-                        pygame.draw.ellipse(self.screen, black, (x * self.cell_size + 10 , y * self.cell_size + 40 , 30, 10),2)
-                        pygame.draw.rect(self.screen, can_color , (x * self.cell_size + 12 , y * self.cell_size + 10,28,35))
-                        pygame.draw.ellipse(self.screen, can_top , (x * self.cell_size + 10 , y * self.cell_size + 5 , 30, 10))
-                        pygame.draw.ellipse(self.screen, black , (x * self.cell_size + 10 , y * self.cell_size + 5 , 30, 10),2)
-                        pygame.draw.line(self.screen, black, (x * self.cell_size + 10 , y * self.cell_size + 10 ), (x * self.cell_size + 10 , y * self.cell_size + 43 ), 2)
-                        pygame.draw.line(self.screen, black, (x * self.cell_size + 39 , y * self.cell_size + 10 ), (x * self.cell_size + 39 , y * self.cell_size + 43 ), 2)
-                        mouth_pos = ((x + 0.5) * self.cell_size, (y + 0.5) * self.cell_size)
+                        pygame.draw.ellipse(
+                            self.screen,
+                            can_color,
+                            (x * self.cell_size + 10, y * self.cell_size + 40, 30, 10),
+                        )
+                        pygame.draw.ellipse(
+                            self.screen,
+                            black,
+                            (x * self.cell_size + 10, y * self.cell_size + 40, 30, 10),
+                            2,
+                        )
+                        pygame.draw.rect(
+                            self.screen,
+                            can_color,
+                            (x * self.cell_size + 12, y * self.cell_size + 10, 28, 35),
+                        )
+                        pygame.draw.ellipse(
+                            self.screen,
+                            can_top,
+                            (x * self.cell_size + 10, y * self.cell_size + 5, 30, 10),
+                        )
+                        pygame.draw.ellipse(
+                            self.screen,
+                            black,
+                            (x * self.cell_size + 10, y * self.cell_size + 5, 30, 10),
+                            2,
+                        )
+                        pygame.draw.line(
+                            self.screen,
+                            black,
+                            (x * self.cell_size + 10, y * self.cell_size + 10),
+                            (x * self.cell_size + 10, y * self.cell_size + 43),
+                            2,
+                        )
+                        pygame.draw.line(
+                            self.screen,
+                            black,
+                            (x * self.cell_size + 39, y * self.cell_size + 10),
+                            (x * self.cell_size + 39, y * self.cell_size + 43),
+                            2,
+                        )
+                        mouth_pos = (
+                            (x + 0.5) * self.cell_size,
+                            (y + 0.5) * self.cell_size,
+                        )
 
                     elif render_grid[y][x] == 4:
                         # Muffin
-                        pygame.draw.circle(self.screen, yellow, (x * self.cell_size + 25, y * self.cell_size + 25,), 20)
-                        pygame.draw.circle(self.screen, black, (x * self.cell_size + 25, y * self.cell_size + 25,), 20, 2)
-                        pygame.draw.rect(self.screen, white, ( x * self.cell_size + 5, y * self.cell_size + 25, 40,20))
-                        pygame.draw.line(self.screen, black, (x * self.cell_size + 5 , y * self.cell_size + 25 ), (x * self.cell_size + 45 , y * self.cell_size + 25 ), 2)
-                        pygame.draw.rect(self.screen, (240, 240, 240), ( x * self.cell_size + 10, y * self.cell_size + 25, 30,20))
-                        pygame.draw.rect(self.screen, black, ( x * self.cell_size + 10, y * self.cell_size + 25, 30,20), 2)
+                        pygame.draw.circle(
+                            self.screen,
+                            yellow,
+                            (x * self.cell_size + 25, y * self.cell_size + 25,),
+                            20,
+                        )
+                        pygame.draw.circle(
+                            self.screen,
+                            black,
+                            (x * self.cell_size + 25, y * self.cell_size + 25,),
+                            20,
+                            2,
+                        )
+                        pygame.draw.rect(
+                            self.screen,
+                            white,
+                            (x * self.cell_size + 5, y * self.cell_size + 25, 40, 20),
+                        )
+                        pygame.draw.line(
+                            self.screen,
+                            black,
+                            (x * self.cell_size + 5, y * self.cell_size + 25),
+                            (x * self.cell_size + 45, y * self.cell_size + 25),
+                            2,
+                        )
+                        pygame.draw.rect(
+                            self.screen,
+                            (240, 240, 240),
+                            (x * self.cell_size + 10, y * self.cell_size + 25, 30, 20),
+                        )
+                        pygame.draw.rect(
+                            self.screen,
+                            black,
+                            (x * self.cell_size + 10, y * self.cell_size + 25, 30, 20),
+                            2,
+                        )
 
                     elif render_grid[y][x] == 5:
                         # Exit
@@ -458,13 +561,24 @@ class SupermarketEnv(gym.Env):
                             True,
                             (
                                 (x * self.cell_size + 25, y * self.cell_size),
-                                (x * self.cell_size + 25, y * self.cell_size + self.cell_size),
+                                (
+                                    x * self.cell_size + 25,
+                                    y * self.cell_size + self.cell_size,
+                                ),
                             ),
                             width=3,
                         )
-                        pygame.draw.rect(self.screen, (75, 122, 71), (x * self.cell_size , y * self.cell_size ,50,20))
-                        exit_text = pygame.font.Font(None, 25).render("Exit", True, (255, 255, 255))
-                        self.screen.blit(exit_text, (x * self.cell_size + 10 , y * self.cell_size + 3))
+                        pygame.draw.rect(
+                            self.screen,
+                            (75, 122, 71),
+                            (x * self.cell_size, y * self.cell_size, 50, 20),
+                        )
+                        exit_text = pygame.font.Font(None, 25).render(
+                            "Exit", True, (255, 255, 255)
+                        )
+                        self.screen.blit(
+                            exit_text, (x * self.cell_size + 10, y * self.cell_size + 3)
+                        )
 
                     elif render_grid[y][x] == 6:
                         pygame.draw.circle(
@@ -474,18 +588,69 @@ class SupermarketEnv(gym.Env):
                             0.5 * (self.cell_size - 10),
                         )
 
-                        pygame.draw.ellipse(self.screen, (0, 0, 0), ((x + 0.5) * self.cell_size - 10, (y + 0.5) * self.cell_size - 10, 5, 5),3)
-                        pygame.draw.ellipse(self.screen, (0, 0, 0), ((x + 0.5) * self.cell_size + 6, (y + 0.5) * self.cell_size - 10, 5, 5),3)
+                        pygame.draw.ellipse(
+                            self.screen,
+                            (0, 0, 0),
+                            (
+                                (x + 0.5) * self.cell_size - 10,
+                                (y + 0.5) * self.cell_size - 10,
+                                5,
+                                5,
+                            ),
+                            3,
+                        )
+                        pygame.draw.ellipse(
+                            self.screen,
+                            (0, 0, 0),
+                            (
+                                (x + 0.5) * self.cell_size + 6,
+                                (y + 0.5) * self.cell_size - 10,
+                                5,
+                                5,
+                            ),
+                            3,
+                        )
 
-                        mouth_pos = ((x + 0.5) * self.cell_size, (y + 0.5) * self.cell_size)
+                        mouth_pos = (
+                            (x + 0.5) * self.cell_size,
+                            (y + 0.5) * self.cell_size,
+                        )
                         mouth_radius = 10
-                        pygame.draw.arc(self.screen, (0,0,0), pygame.Rect(mouth_pos[0]-mouth_radius, mouth_pos[1]-mouth_radius, 2*mouth_radius, 2*mouth_radius), 3.54, 5.88, 3)
-
+                        pygame.draw.arc(
+                            self.screen,
+                            (0, 0, 0),
+                            pygame.Rect(
+                                mouth_pos[0] - mouth_radius,
+                                mouth_pos[1] - mouth_radius,
+                                2 * mouth_radius,
+                                2 * mouth_radius,
+                            ),
+                            3.54,
+                            5.88,
+                            3,
+                        )
 
             # Flip the display
             pygame.display.flip()
+
+            # convert image so it can be displayed in OpenCV
+            if colab_rendering:
+                output.clear()
+                view = pygame.surfarray.array3d(self.screen)
+                view = view.transpose([1, 0, 2])
+                img_bgr = cv2.cvtColor(view, cv2.COLOR_RGB2BGR)
+                cv2_imshow(img_bgr)
+
             # Wait for a short time to slow down the rendering
             pygame.time.wait(25)
+
+        elif self.render_mode == "none":
+            pass
+        else:
+            raise NotImplementedError(
+                "render_mode {} not implemented".format(self.render_mode)
+            )
+
     def close(self):
         if self.pygame_initialized:
             pygame.quit()
@@ -494,62 +659,21 @@ class SupermarketEnv(gym.Env):
 
 
 def test():
-
-    render_mode = "graphic"  # 'inline'
+    from edugym.envs.interactive import play_env, play_env_terminal
 
     # Initialize the environment
-    from edugym.envs.interactive import play_env, play_env_terminal
+    render_mode = "graphic"  # 'terminal', 'none'
     env = SupermarketEnv(step_timeout=0.1, render_mode=render_mode)
-    play_env(env, "w=up, s=down, a=left, d=right", {pygame.K_w:0, pygame.K_s: 1, pygame.K_a: 2, pygame.K_d: 3})
-    # play_env_terminal(env, "w=up, s=down, a=left, d=right", {"w":0, "s": 1, "a": 2, "d": 3})
 
-    env = SupermarketEnv(step_timeout=0.1, render_mode=render_mode, use_single_dim=True)
-    # Difference between step(), descriptive_model() and generative_model()
-    # Calling step
-    print("Calling step(action) example \n")
-    state = env.reset()
-    for i in range(5):
-        state_vector = env.state_to_vector(state)
-        action = env.action_space.sample()  # sample a random action
-        next_state, reward, done, truncated, info = env.step(
-            action
-        )  # info is only there for compatibility with default Gym environments
-        next_state_vector = env.state_to_vector(next_state)
-        print(
-            f"Started in state: {state} (vector {state_vector}) and took action: {action}. Observed next state {next_state} (vector {next_state_vector}) with reward: {reward} and a done (termination) flag: {done}"
+    if render_mode == "graphic":
+        play_env(
+            env,
+            "w=up, s=down, a=left, d=right",
+            {pygame.K_w: 0, pygame.K_s: 1, pygame.K_a: 2, pygame.K_d: 3},
         )
-        state = next_state  # set the state to the new observation for the next round
-
-    print("\nCalling generative_model(state,action) example \n")
-    # Calling model
-    for i in range(5):
-        state = (
-            env.observation_space.sample()
-        )  # sample random state, since model() can be called from any state
-        state_vector = env.state_to_vector(state)
-        action = env.action_space.sample()
-        next_state, reward, done = env.generative_model(
-            state, action
-        )  # this needs both a state and action as input, as opposed to step()
-        next_state_vector = env.state_to_vector(next_state)
-        print(
-            f"When in state : {state} (vector {state_vector})  and we take action: {action}, the next state would be {next_state} (vector {next_state_vector}) with reward: {reward} and a done (termination) flag: {done}"
-        )
-
-    print("\nCalling descriptive_model(state,action) example \n")
-    # Calling model
-    for i in range(1):
-        state = (
-            env.observation_space.sample()
-        )  # sample random state, since model() can be called from any state
-        state_vector = env.state_to_vector(state)
-        action = env.action_space.sample()
-        probs, rewards, done = env.descriptive_model(
-            state, action
-        )  # this needs both a state and action as input, as opposed to step()
-        next_state_vector = env.state_to_vector(next_state)
-        print(
-            f"When in state : {state} (vector {state_vector}) and we take action: {action}, the probability of each possible next state is {probs} with reward: {rewards} and done (termination) flags: {done}"
+    elif render_mode == "terminal":
+        play_env_terminal(
+            env, "w=up, s=down, a=left, d=right", {"w": 0, "s": 1, "a": 2, "d": 3}
         )
 
 

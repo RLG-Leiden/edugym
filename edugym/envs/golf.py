@@ -7,20 +7,32 @@ import numpy as np
 import pygame
 from gymnasium.spaces import Discrete, MultiDiscrete
 
+colab_rendering = "google.colab" in sys.modules
+if colab_rendering:
+    import os
+    import cv2
+    from google.colab import output
+    from google.colab.patches import cv2_imshow
+
+    os.environ["SDL_VIDEODRIVER"] = "dummy"
+
+
 class GolfEnv(gym.Env):
-    metadata = {"render_modes": {"graphic"}}
+    metadata = {"render_modes": {"graphic", "terminal", "none"}}
 
     def __init__(
         self,
         render_mode="graphic",
-        length=16,
+        length=10,
         width=7,
-        green_radius=1.1,
-        max_hits=15,
-        stochasticity_level=0.05,
+        green_radius=2.1,
+        max_hits=10,
+        stochasticity_level=0,
+        seed=None,
     ):
-        # assert length % 2 == 1, "length of golf course must be an uneven number"
         assert width % 2 == 1, "width of golf course must be an uneven number"
+        super().__init__()
+        self.seed(seed)
         self.length = length  # The length of the 2D golf course (start to center green)
         self.width = width
         self.max_hits = max_hits
@@ -49,9 +61,11 @@ class GolfEnv(gym.Env):
     def _get_info(self):
         return {}
 
+    def seed(self, seed=None):
+        super().reset(seed=seed)
+        np.random.seed(seed)
+
     def render(self):
-        if self.render_mode == "terminal":
-            raise NotImplementedError("terminal render not imlemented yet")
         if self.render_mode == "graphic":
             view = None
             if self.screen is None:
@@ -63,13 +77,31 @@ class GolfEnv(gym.Env):
                 obj.render(self.screen)
 
             # Flip the display
-            # self.screen = pygame.transform.flip(self.screen, False, False)
-            # pygame.display.flip()
-            pygame.display.update()
+            self.screen = pygame.transform.flip(self.screen, False, True)
+            pygame.display.flip()
+
+            if colab_rendering:
+                output.clear()
+                view = pygame.surfarray.array3d(self.screen)
+                view = view.transpose([1, 0, 2])
+                img_bgr = cv2.cvtColor(view, cv2.COLOR_RGB2BGR)
+                # if self.render_mode == "human" and colab_rendering:
+                cv2_imshow(img_bgr)
+                pygame.time.wait(RenderObject.frame_length)
+            else:
+                pygame.image.save(self.screen, "frame.png")
+
+            # Wait for a short time to slow down the rendering
+            pygame.time.wait(25)
             return view
+        elif self.render_mode == "terminal":
+            raise NotImplementedError("terminal render not imlemented yet")
+        elif self.render_mode == "none":
+            pass
+        else:
+            raise NotImplementedError
 
     def reset(self, seed=None, options=None):
-        super().reset(seed=seed)
         # Set location of the ball and green
         self.ball.move_to(np.array([self.width / 2] * 2))
         self.hits = 0
@@ -94,7 +126,7 @@ class GolfEnv(gym.Env):
 
         # Sample random deflection of shot
         perpendicular = self._perpendicular(direction)
-        std_dev = self.stochasticity_level * action
+        std_dev = self.stochasticity_level * action ** 1.25  # (action**2)
         directional_deflection = self.np_random.normal(scale=std_dev)
         transverse_deflection = self.np_random.normal(scale=std_dev)
 
@@ -111,20 +143,21 @@ class GolfEnv(gym.Env):
 
         # An episode is done iff the ball is on the green, off course, or when the
         # maximum number of hits are reached.
-        if (
-            not self.observation_space.contains(self._get_obs())
-            or self.hits > self.max_hits
-        ):
+        if self.golf_course.on_green(self.ball.coordinates):
+            # Ball reached the green
+            done = True
+            reward = 1
+        elif not self.observation_space.contains(self._get_obs()):
             # Ball off course
             done = True
             reward = -1
-        elif self.golf_course.on_green(self.ball.coordinates):
-            # Ball reached the green
+        elif self.hits >= self.max_hits:
+            # Too many hits
             done = True
-            reward = max((self.max_hits - self.hits) / self.max_hits, -1)
+            reward = -1 / self.max_hits
         else:
             done = False
-            reward = 0
+            reward = -1 / self.max_hits
 
         observation = self._get_obs()
         info = self._get_info()
@@ -328,12 +361,17 @@ class GolfCourse(RenderObject):
         render_bounds = self.bounds[2:] + np.array([self.edge_size * 2] * 2)
         return render_bounds * self.render_scale
 
+
 def test():
-    render_mode = "graphic"  # 'inline'
+    render_mode = "graphic"  # 'terminal', 'none'
     # Initialize the environment
     from edugym.envs.interactive import play_env
+
     env = GolfEnv(render_mode=render_mode)
-    play_env(env, "p=put, c=Chip, d=drive", {pygame.K_p:0, pygame.K_c: 1, pygame.K_d: 2})
+    play_env(
+        env, "p=put, c=chip, d=drive", {pygame.K_p: 0, pygame.K_c: 1, pygame.K_d: 2}
+    )
+
 
 if __name__ == "__main__":
     test()
